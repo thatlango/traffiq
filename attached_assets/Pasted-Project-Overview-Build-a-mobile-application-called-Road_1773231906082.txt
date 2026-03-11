@@ -1,0 +1,403 @@
+Project Overview
+Build a mobile application called RoadWatch and a public web dashboard that creates a crowdsourced real-time snapshot of traffic conditions, dangerous driving behavior, and road safety incidents.
+The system collects high-precision GPS data from passengers, drivers, and motorcycle taxi riders (boda bodas) and aggregates it into a live traffic intelligence platform.
+The system must work well in cities with mixed transport ecosystems including:
+private cars
+
+
+taxis and minibuses
+
+
+buses
+
+
+trucks
+
+
+boda boda motorcycles
+
+
+delivery riders
+
+
+pedestrians reporting incidents
+
+
+Primary goals:
+• improve road safety
+ • detect overspeeding
+ • crowdsource traffic intelligence
+ • protect passengers
+ • provide public road safety data
+
+System Components
+1. Mobile Application
+The mobile app is the primary tool used by road users.
+Users include:
+passengers
+
+
+drivers
+
+
+boda riders
+
+
+pedestrians reporting incidents
+
+
+The app should be built using a cross-platform framework such as Flutter or React Native so it runs on:
+Android
+ iOS
+Key functions:
+journey tracking
+
+
+crowdsourced traffic data collection
+
+
+overspeed detection
+
+
+safety alerts
+
+
+driver participation
+
+
+emergency reporting
+
+
+
+2. Public Live Dashboard Website
+Create a public website that displays a live traffic and safety dashboard accessible from laptops and large screens.
+The site should show:
+• real-time traffic conditions
+ • congestion heatmaps
+ • overspeed hotspots
+ • accident alerts
+ • dangerous intersections
+ • incident reports
+This dashboard can be used by:
+citizens
+ journalists
+ city planners
+ road safety NGOs
+ transport regulators
+Authorities should also have a secure dashboard layer.
+
+Core Concept
+Every road user becomes a traffic data sensor.
+When a journey begins the app captures:
+GPS coordinates
+ speed
+ route path
+ timestamp
+ acceleration patterns
+ braking behavior
+This data feeds a real-time crowdsourced traffic engine.
+
+Transport Mode Selection
+When starting a journey users choose a transport mode:
+Private Car
+ Taxi / Minibus
+ Bus
+ Truck
+ Boda Boda
+ Bicycle
+ Walking
+Each mode has different speed thresholds.
+Example limits:
+Cars (urban)
+ 50 km/h
+Bus
+ 60 km/h
+Boda boda
+ 40–50 km/h
+
+Boda Boda Rider Mode
+Create a dedicated Rider Mode for motorcycle taxi riders.
+When activated the system tracks:
+GPS route
+ speed
+ acceleration
+ braking patterns
+ riding stability
+Detect risky behavior such as:
+aggressive acceleration
+ sudden braking
+ overspeeding
+ weaving through traffic
+ riding against traffic
+Passengers receive warnings like:
+⚠ Rider speeding
+ ⚠ Dangerous maneuver detected
+
+Universal Driver Mode
+Any road user driving a vehicle can activate Driver Mode.
+Supported drivers:
+private cars
+ taxis
+ buses
+ trucks
+ delivery vehicles
+ motorcycle riders
+Driver Mode tracks:
+speed compliance
+ acceleration patterns
+ braking behavior
+ route history
+ driving smoothness
+
+Driver and Rider Safety Score
+Each driver or rider receives a Safety Score.
+Factors include:
+speed compliance
+ smooth braking
+ controlled acceleration
+ passenger ratings
+ overspeed incidents
+Score scale:
+90–100
+ Excellent driver
+70–89
+ Safe driver
+50–69
+ Moderate risk
+Below 50
+ High risk
+Scores update automatically after each trip.
+
+Passenger Feedback System
+Passengers can rate drivers or riders.
+Categories include:
+Safety
+ Driving smoothness
+ Professionalism
+ Helmet availability
+Ratings influence the Safety Score.
+
+Driver Reputation Profiles
+Each driver or rider profile shows:
+Safety score
+ Trips completed
+ Average rating
+ Overspeed incidents
+ Safety badges
+Example badges:
+Safe Driver
+ 500 Safe Trips
+ Community Trusted
+ Helmet Champion
+
+Driver and Rider Incentives
+Encourage participation with rewards such as:
+Safe driver leaderboards
+ Verified safe driver badges
+ Partner discounts (fuel or insurance)
+Top drivers receive RoadWatch Certified Safe Driver status.
+
+Smart Route Safety Assistant
+Create a real-time safety navigation assistant similar to Waze and Google Maps but focused on road safety.
+Warn users about:
+accidents ahead
+ overspeed hotspots
+ traffic congestion
+ police checkpoints
+ dangerous intersections
+ high boda traffic zones
+Alerts appear as:
+map markers
+ push notifications
+ voice alerts
+
+High Precision Location Tracking
+Implement high-accuracy positioning.
+Use multi-source positioning:
+GPS satellites
+ WiFi positioning
+ cell tower triangulation
+ device motion sensors
+Combine sources using sensor fusion algorithms.
+Target accuracy:
+3–5 meter location precision
+Speed accuracy:
+1–2 km/h
+Capture location every 1–2 seconds during journeys.
+
+Data Integrity and Verification
+Ensure captured data is trustworthy.
+Implement:
+timestamp verification
+ device signature hashing
+ sensor consistency checks
+ GPS anomaly detection
+Each record includes:
+Journey ID
+ Latitude
+ Longitude
+ Speed
+ Timestamp
+ Accuracy radius
+ Device hash
+Store logs as immutable records.
+
+Live Crowdsourced Traffic Engine
+All active users contribute data.
+The platform calculates:
+traffic speed
+ congestion levels
+ overspeed events
+ dangerous driving clusters
+Road segments update every 5 seconds.
+
+Real-Time Traffic Map
+Map color system:
+Green
+ Free traffic
+Yellow
+ Moderate traffic
+Red
+ Heavy congestion
+Purple
+ Overspeed incidents
+Black
+ Accidents or hazards
+Also display motorcycle shortcut routes used by boda riders.
+
+Incident Reporting
+Users can report incidents including:
+accidents
+ reckless drivers
+ road hazards
+ traffic jams
+ police checkpoints
+ broken traffic lights
+Nearby users can confirm reports to increase accuracy.
+
+Emergency Safety Mode
+Users can activate Emergency Mode when they feel unsafe.
+The system automatically shares:
+live GPS location
+ journey route
+ driver behavior
+ speed data
+with:
+trusted contacts
+ emergency responders
+ authorities (optional)
+
+Visual Evidence Capture
+Emergency Mode must allow fast capture of evidence.
+Add quick buttons:
+📸 Take Photo
+ 🎥 Record Short Video
+Features:
+one-tap capture
+ 10–30 second video recording
+ rear or front camera
+ optional continuous recording
+Each photo or video automatically includes metadata:
+GPS coordinates
+ timestamp
+ device signature
+ journey ID
+ vehicle speed
+
+Stealth Safety Mode
+Add an option where the app records evidence silently.
+Features:
+reduced screen brightness
+ hidden alerts
+ silent recording
+This allows discreet evidence capture.
+
+Automatic Cloud Backup
+All emergency media should be instantly uploaded to secure cloud storage.
+Benefits:
+prevents evidence loss
+ protects data if the phone is damaged or taken
+Media should be encrypted and timestamped.
+
+Journey Replay System
+Authorities can replay journeys showing:
+route animation
+ speed changes
+ braking events
+ overspeed moments
+This provides digital traffic enforcement evidence.
+
+Insurance Integration Feature
+Create a Driver Risk Intelligence System.
+Insurance companies can analyze driving behavior.
+Example partners include:
+Jubilee Insurance
+ UAP Old Mutual
+Support Usage-Based Insurance (UBI) models using:
+speed compliance
+ harsh braking
+ dangerous acceleration
+ night driving behavior
+Safer drivers qualify for lower premiums.
+
+Fleet Safety Monitoring
+Transport companies can monitor driver safety.
+Fleet dashboards display:
+driver safety scores
+ overspeed events
+ trip logs
+ risk alerts
+
+Road Risk Intelligence
+Generate analytics for authorities and insurers showing:
+accident hotspots
+ overspeed corridors
+ dangerous intersections
+ boda accident zones
+
+Public Dashboard Visualizations
+The website should include:
+traffic heatmaps
+ speed distribution charts
+ incident density maps
+ time-based congestion trends
+
+Privacy Protection
+Protect users through:
+anonymous user IDs
+ aggregated traffic data
+ opt-in tracking
+ no public exposure of personal identity
+
+UI Design Principles
+The interface must be:
+simple
+ fast
+ clear
+ non-technical
+Key screens:
+Home
+ Start Journey
+ Traffic Map
+ Report Incident
+ Driver Profile
+ Emergency Mode
+
+Demo Data
+Generate simulated journeys demonstrating:
+traffic congestion
+ overspeed events
+ accidents
+ boda shortcuts
+
+Long-Term Vision
+RoadWatch should evolve into a national crowdsourced road safety intelligence platform supporting cities such as Kampala and other rapidly growing urban areas.
+The platform will provide:
+real-time traffic awareness
+ dangerous driver detection
+ passenger protection
+ road safety analytics
+ urban mobility insights.
+
+
+
