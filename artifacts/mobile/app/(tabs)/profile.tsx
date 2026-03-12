@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { useJourney } from "@/context/JourneyContext";
 import SafetyScoreRing from "@/components/SafetyScoreRing";
 import Colors from "@/constants/colors";
@@ -44,7 +47,11 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const { safetyScore, riskLevel, totalTrips, totalDistance, pastJourneys } = useJourney();
+  const { safetyScore, riskLevel, totalTrips, totalDistance, pastJourneys, nextOfKin, addNextOfKin, removeNextOfKin } = useJourney();
+
+  const [showKinForm, setShowKinForm] = useState(false);
+  const [kinName, setKinName] = useState("");
+  const [kinPhone, setKinPhone] = useState("");
 
   const totalOverspeedEvents = pastJourneys.reduce((acc, j) => acc + j.overspeedEvents, 0);
   const totalDurationMs = pastJourneys.reduce((acc, j) => acc + ((j.endTime ?? 0) - j.startTime), 0);
@@ -52,6 +59,40 @@ export default function ProfileScreen() {
 
   const badges = getBadges(totalTrips, safetyScore, totalOverspeedEvents);
   const earnedBadges = badges.filter(b => b.earned);
+
+  const handleAddKin = async () => {
+    if (!kinName.trim()) {
+      Alert.alert("Missing Name", "Please enter a name for your next of kin.");
+      return;
+    }
+    if (!kinPhone.trim()) {
+      Alert.alert("Missing Phone", "Please enter a phone number.");
+      return;
+    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await addNextOfKin({ name: kinName.trim(), phone: kinPhone.trim() });
+    setKinName("");
+    setKinPhone("");
+    setShowKinForm(false);
+  };
+
+  const handleRemoveKin = (id: string, name: string) => {
+    Alert.alert(
+      "Remove Contact",
+      `Remove ${name} from your next of kin?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            removeNextOfKin(id);
+          },
+        },
+      ]
+    );
+  };
 
   const getRiskColor = () => {
     switch (riskLevel) {

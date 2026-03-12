@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
+import { Share, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 
@@ -34,6 +35,12 @@ export interface SafetyAlert {
   location?: { latitude: number; longitude: number };
 }
 
+export interface NextOfKin {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 interface JourneyContextValue {
   isTracking: boolean;
   currentJourney: Journey | null;
@@ -54,6 +61,12 @@ interface JourneyContextValue {
   toggleEmergency: () => void;
   totalTrips: number;
   totalDistance: number;
+  currentRoadName: string | null;
+  nextOfKin: NextOfKin[];
+  addNextOfKin: (contact: Omit<NextOfKin, "id">) => Promise<void>;
+  removeNextOfKin: (id: string) => Promise<void>;
+  sharingJourney: boolean;
+  shareJourneyWithKin: () => Promise<void>;
 }
 
 const SPEED_LIMITS: Record<TransportMode, number> = {
@@ -78,13 +91,19 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
   const [safetyScore, setSafetyScore] = useState(82);
   const [selectedMode, setSelectedMode] = useState<TransportMode>("car");
   const [emergencyMode, setEmergencyMode] = useState(false);
+  const [currentRoadName, setCurrentRoadName] = useState<string | null>(null);
+  const [nextOfKin, setNextOfKin] = useState<NextOfKin[]>([]);
+  const [sharingJourney, setSharingJourney] = useState(false);
 
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
   const journeyRef = useRef<Journey | null>(null);
   const overspeedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastGeocodeTime = useRef<number>(0);
 
   useEffect(() => {
     loadPastJourneys();
+    loadNextOfKin();
   }, []);
 
   const loadPastJourneys = async () => {
@@ -101,6 +120,13 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
+  const loadNextOfKin = async () => {
+    try {
+      const stored = await AsyncStorage.getItem("@roadwatch_nextofkin");
+      if (stored) setNextOfKin(JSON.parse(stored));
+    } catch {}
+  };
+
   const saveJourney = async (journey: Journey) => {
     try {
       const stored = await AsyncStorage.getItem("@roadwatch_journeys");
@@ -110,6 +136,43 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
       setPastJourneys(updated);
     } catch {}
   };
+
+  const addNextOfKin = useCallback(async (contact: Omit<NextOfKin, "id">) => {
+    const newContact: NextOfKin = {
+      ...contact,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
+    };
+    const updated = [...nextOfKin, newContact];
+    setNextOfKin(updated);
+    await AsyncStorage.setItem("@roadwatch_nextofkin", JSON.stringify(updated));
+  }, [nextOfKin]);
+
+  const removeNextOfKin = useCallback(async (id: string) => {
+    const updated = nextOfKin.filter(k => k.id !== id);
+    setNextOfKin(updated);
+    await AsyncStorage.setItem("@roadwatch_nextofkin", JSON.stringify(updated));
+  }, [nextOfKin]);
+
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+    const now = Date.now();
+    if (now - lastGeocodeTime.current < 20000) return; // throttle to every 20s
+    lastGeocodeTime.current = now;
+    try {
+      if (Platform.OS === "web") {
+        // Fallback for web — use a dummy road name based on coords
+        setCurrentRoadName("Kampala Road");
+        return;
+      }
+      const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      if (results.length > 0) {
+        const r = results[0];
+        const road = r.street ?? r.name ?? r.district ?? r.subregion ?? r.city ?? null;
+        setCurrentRoadName(road);
+      }
+    } catch {
+      setCurrentRoadName(null);
+    }
+  }, []);
 
   const speedLimit = SPEED_LIMITS[selectedMode];
   const isOverspeed = currentSpeed > speedLimit;
@@ -153,6 +216,8 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     setCurrentJourney(journey);
     setIsTracking(true);
     setSelectedMode(mode);
+    setCurrentRoadName(null);
+    lastGeocodeTime.current = 0;
 
     locationSubscription.current = await Location.watchPositionAsync(
       {
@@ -171,6 +236,9 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
         };
         setCurrentLocation(point);
         setCurrentSpeed(Math.max(0, speedKmh));
+
+        // Reverse geocode to get road name (throttled)
+        reverseGeocode(loc.coords.latitude, loc.coords.longitude);
 
         if (journeyRef.current) {
           const j = journeyRef.current;
@@ -191,7 +259,7 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
         }
       }
     );
-  }, [addAlert]);
+  }, [addAlert, reverseGeocode]);
 
   const stopJourney = useCallback(async () => {
     if (locationSubscription.current) {
@@ -216,7 +284,39 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     setCurrentJourney(null);
     journeyRef.current = null;
     setCurrentSpeed(0);
+    setCurrentRoadName(null);
+    setSharingJourney(false);
   }, []);
+
+  const shareJourneyWithKin = useCallback(async () => {
+    if (!currentJourney) return;
+
+    const loc = currentLocation;
+    const roadPart = currentRoadName ? `on ${currentRoadName}` : "";
+    const kinNames = nextOfKin.map(k => k.name).join(", ");
+    const speedPart = `at ${Math.round(currentSpeed)} km/h`;
+    const mapsLink = loc
+      ? `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`
+      : "";
+
+    const message = [
+      `RoadWatch Live Journey Update`,
+      ``,
+      `I am currently travelling ${roadPart} ${speedPart}.`,
+      loc ? `Live location: ${mapsLink}` : "",
+      ``,
+      `Journey started: ${new Date(currentJourney.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+      `Transport mode: ${currentJourney.mode.toUpperCase()}`,
+      ``,
+      `Shared via RoadWatch — Crowdsourced Road Safety`,
+    ].filter(Boolean).join("\n");
+
+    try {
+      await Share.share({ message, title: "RoadWatch Live Journey" });
+      setSharingJourney(true);
+      addAlert({ type: "congestion", message: `Journey shared${kinNames ? ` with ${kinNames}` : ""}.` });
+    } catch {}
+  }, [currentJourney, currentLocation, currentRoadName, currentSpeed, nextOfKin, addAlert]);
 
   const toggleEmergency = useCallback(() => {
     setEmergencyMode((prev) => {
@@ -249,6 +349,12 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
         toggleEmergency,
         totalTrips,
         totalDistance,
+        currentRoadName,
+        nextOfKin,
+        addNextOfKin,
+        removeNextOfKin,
+        sharingJourney,
+        shareJourneyWithKin,
       }}
     >
       {children}
