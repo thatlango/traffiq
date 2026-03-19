@@ -13,6 +13,7 @@ import {
 import OverviewPage from "@/pages/Overview";
 import UsersPage from "@/pages/Users";
 import IncidentsPage from "@/pages/Incidents";
+import MapViewPage from "@/pages/MapView";
 import AdminLogin from "@/auth/AdminLogin";
 import { api } from "@/lib/api";
 
@@ -20,12 +21,13 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchInterval: 30_000, staleTime: 10_000 } },
 });
 
-type Page = "overview" | "users" | "incidents";
+type Page = "overview" | "users" | "incidents" | "map";
 
 const NAV = [
   { id: "overview" as Page, label: "Overview", icon: LayoutDashboard },
   { id: "users" as Page, label: "Users", icon: Users },
   { id: "incidents" as Page, label: "Incidents", icon: AlertTriangle },
+  { id: "map" as Page, label: "Live Map", icon: Map },
 ];
 
 const SESSION_KEY = "traffiq_admin_session";
@@ -166,10 +168,11 @@ function Shell({ session, onSignOut }: { session: AdminSession; onSignOut: () =>
           <div className="ml-auto"><LivePulse /></div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className={`flex-1 ${page === "map" ? "overflow-hidden flex flex-col" : "overflow-y-auto"}`}>
           {page === "overview" && <OverviewPage />}
           {page === "users" && <UsersPage />}
           {page === "incidents" && <IncidentsPage />}
+          {page === "map" && <MapViewPage />}
         </main>
       </div>
     </div>
