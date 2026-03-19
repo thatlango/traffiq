@@ -1,5 +1,5 @@
 [build]
-  command = "npm install -g pnpm && pnpm install && pnpm --filter @workspace/dashboard run build"
+  command = "npm install -g pnpm@10 && pnpm install --filter \"@workspace/dashboard...\" --no-frozen-lockfile && pnpm --filter @workspace/dashboard run build"
   publish = "artifacts/dashboard/dist/public"
 
 [build.environment]
