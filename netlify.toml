@@ -1,0 +1,14 @@
+[build]
+  base    = "artifacts/dashboard"
+  command = "npm install -g pnpm && pnpm install && pnpm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  BASE_PATH    = "/"
+
+# SPA fallback — all routes serve index.html so React Router can handle them
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
