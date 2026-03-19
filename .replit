@@ -27,3 +27,9 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_GOOGLE_CLIENT_ID = "32567639469-1aoo120bq9pj1cnh3hutjknc5tuipqs0.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = "32567639469-1aoo120bq9pj1cnh3hutjknc5tuipqs0.apps.googleusercontent.com"
