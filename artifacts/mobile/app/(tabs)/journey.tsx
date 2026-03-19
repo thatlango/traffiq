@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useJourney, TransportMode } from "@/context/JourneyContext";
@@ -24,23 +24,22 @@ function formatDuration(ms: number) {
   return `${m}m ${s % 60}s`;
 }
 
-const MODES: { key: TransportMode; icon: string; label: string; limit: number }[] = [
-  { key: "car", icon: "car-front", label: "Car", limit: 50 },
-  { key: "taxi", icon: "taxi", label: "Taxi", limit: 50 },
-  { key: "bus", icon: "bus", label: "Bus", limit: 60 },
-  { key: "boda", icon: "motorbike", label: "Boda", limit: 45 },
-  { key: "bicycle", icon: "bicycle", label: "Bicycle", limit: 30 },
-  { key: "walking", icon: "walk", label: "Walk", limit: 10 },
+const MODES: { key: TransportMode; mciIcon: string; label: string; limit: number; color: string }[] = [
+  { key: "car",     mciIcon: "car",              label: "Car",     limit: 50, color: Colors.info },
+  { key: "taxi",    mciIcon: "taxi",             label: "Taxi",    limit: 50, color: Colors.accent },
+  { key: "bus",     mciIcon: "bus",              label: "Bus",     limit: 60, color: Colors.success },
+  { key: "boda",    mciIcon: "motorbike",        label: "Boda",    limit: 45, color: Colors.warning },
+  { key: "bicycle", mciIcon: "bicycle",          label: "Bicycle", limit: 30, color: Colors.purple ?? "#A78BFA" },
+  { key: "walking", mciIcon: "walk",             label: "Walk",    limit: 10, color: Colors.textSecondary },
 ];
 
-// Map MaterialCommunityIcons names to Feather equivalents for TS safety
-const MODE_FEATHER: Record<TransportMode, string> = {
-  car: "navigation",
-  taxi: "map",
-  bus: "map-pin",
-  boda: "zap",
-  bicycle: "activity",
-  walking: "user",
+const MODE_MCI_ICON: Record<TransportMode, string> = {
+  car: "car",
+  taxi: "taxi",
+  bus: "bus",
+  boda: "motorbike",
+  bicycle: "bicycle",
+  walking: "walk",
 };
 
 export default function JourneyScreen() {
@@ -179,21 +178,27 @@ export default function JourneyScreen() {
             <View style={styles.modeGrid}>
               {MODES.map(m => {
                 const isSelected = selectedMode === m.key;
+                const iconColor = isSelected ? Colors.primary : m.color;
                 return (
                   <Pressable
                     key={m.key}
                     onPress={() => { Haptics.selectionAsync(); setSelectedMode(m.key); }}
                     style={({ pressed }) => [
                       styles.modeCard,
-                      isSelected && styles.modeCardSelected,
+                      isSelected && [styles.modeCardSelected, { backgroundColor: m.color }],
                       pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
                     ]}
                   >
-                    <Feather
-                      name={MODE_FEATHER[m.key] as any}
-                      size={22}
-                      color={isSelected ? Colors.primary : Colors.textSecondary}
-                    />
+                    <View style={[
+                      styles.modeIconWrap,
+                      { backgroundColor: isSelected ? "rgba(255,255,255,0.18)" : m.color + "1A" },
+                    ]}>
+                      <MaterialCommunityIcons
+                        name={m.mciIcon as any}
+                        size={26}
+                        color={iconColor}
+                      />
+                    </View>
                     <Text style={[styles.modeLabel, isSelected && styles.modeLabelSelected]}>{m.label}</Text>
                     <Text style={[styles.modeLimit, isSelected && { color: Colors.primary + "cc" }]}>
                       {m.limit} km/h
@@ -249,8 +254,12 @@ export default function JourneyScreen() {
                 j.safetyScore >= 50 ? Colors.warning : Colors.danger;
               return (
                 <View key={j.id} style={styles.journeyCard}>
-                  <View style={[styles.journeyModeBadge, { backgroundColor: Colors.accent + "20" }]}>
-                    <Text style={styles.journeyModeText}>{j.mode.toUpperCase()}</Text>
+                  <View style={styles.journeyModeIcon}>
+                    <MaterialCommunityIcons
+                      name={MODE_MCI_ICON[j.mode as TransportMode] as any}
+                      size={22}
+                      color={MODES.find(m => m.key === j.mode)?.color ?? Colors.accent}
+                    />
                   </View>
                   <View style={styles.journeyMeta}>
                     <Text style={styles.journeyDate}>
@@ -349,11 +358,14 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: Colors.border,
   },
   modeCardSelected: {
-    backgroundColor: Colors.accent,
-    borderColor: Colors.accent,
-    shadowColor: Colors.accent,
+    borderColor: "transparent",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 10, elevation: 5,
+    shadowOpacity: 0.45, shadowRadius: 10, elevation: 5,
+  },
+  modeIconWrap: {
+    width: 50, height: 50, borderRadius: 25,
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 2,
   },
   modeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.text },
   modeLabelSelected: { color: Colors.primary },
@@ -393,8 +405,12 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 12,
     borderWidth: 1, borderColor: Colors.border,
   },
-  journeyModeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  journeyModeText: { fontFamily: "Inter_700Bold", fontSize: 10, color: Colors.accent, letterSpacing: 0.5 },
+  journeyModeIcon: {
+    width: 42, height: 42, borderRadius: 21,
+    backgroundColor: Colors.primary,
+    borderWidth: 1.5, borderColor: Colors.border,
+    alignItems: "center", justifyContent: "center",
+  },
   journeyMeta: { flex: 1, gap: 2 },
   journeyDate: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.text },
   journeyStats: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
