@@ -8,7 +8,7 @@ import {
   Flame, Zap, AlertTriangle, Cloud, Construction, Eye, Car,
   Search, RefreshCw, ChevronDown, ChevronUp, MapPin, Clock,
   ThumbsUp, SlidersHorizontal, ArrowUpDown, Download,
-  CheckCircle, XCircle, Map, TrendingUp, Shield,
+  CheckCircle, XCircle, Map as MapIcon, TrendingUp, Shield,
 } from "lucide-react";
 import { api, IncidentRow, IncidentStats } from "@/lib/api";
 import { formatDistanceToNow, parseISO, format, isAfter, subDays } from "date-fns";
@@ -223,7 +223,7 @@ function IncidentCard({ incident, focused, onFocus, onConfirm, onDismiss }: {
               onClick={e => { e.stopPropagation(); onFocus(focused ? null : incident.id); }}
               className={`p-1.5 rounded-lg transition-colors ${focused ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary hover:bg-primary/10"}`}
             >
-              <Map size={13} />
+              <MapIcon size={13} />
             </button>
           )}
           {expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
@@ -422,7 +422,7 @@ export default function IncidentsPage() {
               onClick={() => setShowMap(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm border transition-colors ${showMap ? "bg-primary/10 border-primary/30 text-primary" : "bg-card border-border text-muted-foreground hover:text-foreground"}`}
             >
-              <Map size={14} /> Map {showMap ? "on" : "off"}
+              <MapIcon size={14} /> Map {showMap ? "on" : "off"}
             </button>
             <button
               onClick={() => setShowFilters(f => !f)}
