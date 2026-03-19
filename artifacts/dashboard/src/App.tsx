@@ -1,18 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Users,
   AlertTriangle,
-  Activity,
   Menu,
   X,
   Radio,
   Map,
+  LogOut,
 } from "lucide-react";
 import OverviewPage from "@/pages/Overview";
 import UsersPage from "@/pages/Users";
 import IncidentsPage from "@/pages/Incidents";
+import AdminLogin from "@/auth/AdminLogin";
 import { api } from "@/lib/api";
 
 const queryClient = new QueryClient({
@@ -27,6 +28,14 @@ const NAV = [
   { id: "incidents" as Page, label: "Incidents", icon: AlertTriangle },
 ];
 
+const SESSION_KEY = "traffiq_admin_session";
+
+interface AdminSession {
+  email: string;
+  name: string;
+  picture?: string;
+}
+
 function LivePulse() {
   const { data } = useQuery({ queryKey: ["overview"], queryFn: api.overview });
   return (
@@ -39,15 +48,16 @@ function LivePulse() {
   );
 }
 
-function Sidebar({ page, setPage, open, setOpen }: {
+function Sidebar({ page, setPage, open, setOpen, session, onSignOut }: {
   page: Page;
   setPage: (p: Page) => void;
   open: boolean;
   setOpen: (v: boolean) => void;
+  session: AdminSession;
+  onSignOut: () => void;
 }) {
   return (
     <>
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 bg-black/60 z-40 lg:hidden"
@@ -100,24 +110,49 @@ function Sidebar({ page, setPage, open, setOpen }: {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-sidebar-border">
-          <p className="text-xs text-muted-foreground">TraffIQ · Uganda Road Safety</p>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">traffiq.tukutuku.org</p>
+        {/* Admin profile + sign out */}
+        <div className="px-4 py-4 border-t border-sidebar-border space-y-3">
+          <div className="flex items-center gap-3">
+            {session.picture ? (
+              <img src={session.picture} alt="" className="w-8 h-8 rounded-full" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                {session.name[0]}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground truncate">{session.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{session.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={onSignOut}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+          >
+            <LogOut size={14} />
+            Sign out
+          </button>
+          <p className="text-xs text-muted-foreground/60">traffiq.tukutuku.org</p>
         </div>
       </aside>
     </>
   );
 }
 
-function Shell() {
+function Shell({ session, onSignOut }: { session: AdminSession; onSignOut: () => void }) {
   const [page, setPage] = useState<Page>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar page={page} setPage={setPage} open={sidebarOpen} setOpen={setSidebarOpen} />
-
+      <Sidebar
+        page={page}
+        setPage={setPage}
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+        session={session}
+        onSignOut={onSignOut}
+      />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile topbar */}
         <header className="lg:hidden flex items-center gap-4 px-4 py-3 border-b border-border bg-card">
@@ -131,7 +166,6 @@ function Shell() {
           <div className="ml-auto"><LivePulse /></div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto">
           {page === "overview" && <OverviewPage />}
           {page === "users" && <UsersPage />}
@@ -142,10 +176,35 @@ function Shell() {
   );
 }
 
+function AuthGate({ children }: { children: (session: AdminSession, signOut: () => void) => React.ReactNode }) {
+  const [session, setSession] = useState<AdminSession | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+
+  const handleAuth = (email: string, name: string, picture?: string) => {
+    const s = { email, name, picture };
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    setSession(s);
+  };
+
+  const handleSignOut = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setSession(null);
+  };
+
+  if (!session) return <AdminLogin onAuth={handleAuth} />;
+  return <>{children(session, handleSignOut)}</>;
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Shell />
+      <AuthGate>
+        {(session, signOut) => <Shell session={session} onSignOut={signOut} />}
+      </AuthGate>
     </QueryClientProvider>
   );
 }
