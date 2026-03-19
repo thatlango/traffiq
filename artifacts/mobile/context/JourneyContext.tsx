@@ -104,11 +104,12 @@ const KIN_KEY         = "@traffiq_nextofkin";
 const GEOCODE_THROTTLE_MS = 45_000;   // one reverse-geocode per 45 seconds max
 const GEOCODE_MOVE_M  = 150;          // only re-geocode if moved > 150 m
 
-// GPS: fast poll — 500 ms, 2 m minimum movement
+// GPS: fire every 500 ms OR every 5 m movement — whichever comes first.
+// 5 m distanceInterval = every logged point represents a real ≥5 m position change.
 const GPS_OPTIONS: Location.LocationOptions = {
   accuracy: Location.Accuracy.BestForNavigation,
   timeInterval: 500,
-  distanceInterval: 2,
+  distanceInterval: 5,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -129,18 +130,10 @@ function haversineM(lat1: number, lng1: number, lat2: number, lng2: number): num
   return haversineKm(lat1, lng1, lat2, lng2) * 1000;
 }
 
-/** Keep first, last, and every 10th point from a route */
-function compressRoute(route: LocationPoint[]): LocationPoint[] {
-  if (route.length <= 2) return route;
-  const out: LocationPoint[] = [route[0]];
-  for (let i = 10; i < route.length - 1; i += 10) out.push(route[i]);
-  out.push(route[route.length - 1]);
-  return out;
-}
-
 function journeyToStored(j: Journey): StoredJourney {
   const { route, ...rest } = j;
-  return { ...rest, routeSample: compressRoute(route) };
+  // Every point represents a real ≥5 m GPS change — store them all.
+  return { ...rest, routeSample: route };
 }
 
 function storedToJourney(s: StoredJourney): Journey {
