@@ -18,7 +18,7 @@ import AdminLogin from "@/auth/AdminLogin";
 import { api } from "@/lib/api";
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchInterval: 30_000, staleTime: 10_000 } },
+  defaultOptions: { queries: { refetchInterval: 5_000, staleTime: 0, refetchOnWindowFocus: true } },
 });
 
 type Page = "overview" | "users" | "incidents" | "map";
