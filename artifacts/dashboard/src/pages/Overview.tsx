@@ -86,12 +86,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function OverviewPage({ onNavigate }: { onNavigate?: (p: Page) => void }) {
-  const stats   = useQuery({ queryKey: ["overview"],        queryFn: api.overview,       refetchInterval: 15_000 });
-  const signups = useQuery({ queryKey: ["daily-signups"],   queryFn: api.dailySignups,   refetchInterval: 60_000 });
-  const journeys= useQuery({ queryKey: ["daily-journeys"],  queryFn: api.dailyJourneys,  refetchInterval: 60_000 });
-  const cities  = useQuery({ queryKey: ["cities"],          queryFn: api.signupsByCity,  refetchInterval: 60_000 });
-  const modes   = useQuery({ queryKey: ["modes"],           queryFn: api.transportModes, refetchInterval: 60_000 });
-  const incidents= useQuery({ queryKey: ["incidents"],      queryFn: api.recentIncidents, refetchInterval: 30_000 });
+  const stats   = useQuery({ queryKey: ["overview"],        queryFn: api.overview,        refetchInterval: 3_000 });
+  const signups = useQuery({ queryKey: ["daily-signups"],   queryFn: api.dailySignups,    refetchInterval: 15_000 });
+  const journeys= useQuery({ queryKey: ["daily-journeys"],  queryFn: api.dailyJourneys,   refetchInterval: 15_000 });
+  const cities  = useQuery({ queryKey: ["cities"],          queryFn: api.signupsByCity,   refetchInterval: 15_000 });
+  const modes   = useQuery({ queryKey: ["modes"],           queryFn: api.transportModes,  refetchInterval: 15_000 });
+  const incidents= useQuery({ queryKey: ["incidents"],      queryFn: api.recentIncidents, refetchInterval: 5_000 });
 
   const signupsData  = (signups.data ?? []).map(d => ({ day: format(parseISO(d.day), "MMM d"), signups: Number(d.count) }));
   const journeysData = (journeys.data ?? []).map(d => ({ day: format(parseISO(d.day), "MMM d"), journeys: Number(d.count) }));
