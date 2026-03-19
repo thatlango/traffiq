@@ -73,6 +73,34 @@ router.post("/incidents", async (req, res) => {
   }
 });
 
+// PATCH /api/incidents/:id/confirm — admin: increment confirmed count
+router.patch("/incidents/:id/confirm", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE incidents SET confirmed = confirmed + 1 WHERE id = $1 RETURNING id, confirmed`,
+      [req.params.id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: "incident not found" });
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/incidents/:id/dismiss — admin: set confirmed to -1 (dismissed)
+router.patch("/incidents/:id/dismiss", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE incidents SET confirmed = -1 WHERE id = $1 RETURNING id, confirmed`,
+      [req.params.id]
+    );
+    if (result.rowCount === 0) return res.status(404).json({ error: "incident not found" });
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/analytics/overview
 router.get("/analytics/overview", async (_req, res) => {
   try {
@@ -169,16 +197,74 @@ router.get("/analytics/daily-journeys", async (_req, res) => {
   }
 });
 
-// GET /api/analytics/recent-incidents
-router.get("/analytics/recent-incidents", async (_req, res) => {
+// GET /api/analytics/recent-incidents — with server-side filter + pagination
+router.get("/analytics/recent-incidents", async (req, res) => {
+  const limit  = Math.min(parseInt(req.query.limit  as string) || 100, 500);
+  const offset = parseInt(req.query.offset as string) || 0;
+  const type   = req.query.type   as string | undefined;
+  const days   = parseInt(req.query.days as string) || 0;
+
+  const conditions: string[] = [];
+  const params: any[] = [];
+  let idx = 1;
+
+  if (type && type !== "all") { conditions.push(`i.type = $${idx++}`); params.push(type); }
+  if (days > 0) { conditions.push(`i.created_at > NOW() - INTERVAL '${days} days'`); }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
   try {
-    const result = await pool.query(
-      `SELECT i.*, u.name AS reporter_name, u.device_platform
-       FROM incidents i
-       LEFT JOIN users u ON u.id = i.user_id
-       ORDER BY i.created_at DESC LIMIT 50`
-    );
-    res.json(result.rows);
+    const [rows, total] = await Promise.all([
+      pool.query(
+        `SELECT i.*, u.name AS reporter_name, u.device_platform
+         FROM incidents i
+         LEFT JOIN users u ON u.id = i.user_id
+         ${where}
+         ORDER BY i.created_at DESC
+         LIMIT $${idx++} OFFSET $${idx++}`,
+        [...params, limit, offset]
+      ),
+      pool.query(
+        `SELECT COUNT(*) FROM incidents i ${where}`,
+        params
+      ),
+    ]);
+    res.json({ incidents: rows.rows, total: parseInt(total.rows[0].count) });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/analytics/incidents-stats — summary for dashboard
+router.get("/analytics/incidents-stats", async (_req, res) => {
+  try {
+    const [byType, daily, summary] = await Promise.all([
+      pool.query(
+        `SELECT type, COUNT(*) AS count, ROUND(AVG(confirmed)) AS avg_confirmed
+         FROM incidents GROUP BY type ORDER BY count DESC`
+      ),
+      pool.query(
+        `SELECT DATE(created_at AT TIME ZONE 'Africa/Kampala') AS day, COUNT(*) AS count
+         FROM incidents
+         WHERE created_at > NOW() - INTERVAL '14 days'
+         GROUP BY day ORDER BY day ASC`
+      ),
+      pool.query(
+        `SELECT
+           COUNT(*) AS total,
+           ROUND(AVG(confirmed)) AS avg_confirmed,
+           COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL) AS with_location,
+           COUNT(*) FILTER (WHERE confirmed > 0) AS verified,
+           COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '24 hours') AS today
+         FROM incidents`
+      ),
+    ]);
+
+    res.json({
+      byType: byType.rows,
+      daily:  daily.rows,
+      summary: summary.rows[0],
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
