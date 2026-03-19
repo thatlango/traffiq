@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -13,6 +14,7 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useJourney } from "@/context/JourneyContext";
+import { useAuth } from "@/context/AuthContext";
 import SafetyScoreRing from "@/components/SafetyScoreRing";
 import Colors from "@/constants/colors";
 
@@ -32,7 +34,7 @@ function getBadges(trips: number, score: number, overspeedCount: number): Badge[
     { id: "100_trips", label: "100 Trips", icon: "award", color: Colors.info, earned: trips >= 100, description: "Complete 100 journeys" },
     { id: "no_overspeed", label: "Speed Compliant", icon: "activity", color: Colors.success, earned: overspeedCount === 0 && trips >= 3, description: "Zero overspeed events in 3 trips" },
     { id: "trusted", label: "Community Trusted", icon: "users", color: Colors.purple, earned: trips >= 20 && score >= 80, description: "20 trips with 80+ safety score" },
-    { id: "certified", label: "RW Certified", icon: "check-circle", color: Colors.accent, earned: score >= 90 && trips >= 10, description: "Top tier safety champion" },
+    { id: "certified", label: "TQ Certified", icon: "check-circle", color: Colors.accent, earned: score >= 90 && trips >= 10, description: "Top tier safety champion" },
   ];
 }
 
@@ -48,6 +50,7 @@ export default function ProfileScreen() {
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
   const { safetyScore, riskLevel, totalTrips, totalDistance, pastJourneys, nextOfKin, addNextOfKin, removeNextOfKin } = useJourney();
+  const { user, signOut } = useAuth();
 
   const [showKinForm, setShowKinForm] = useState(false);
   const [kinName, setKinName] = useState("");
@@ -116,14 +119,47 @@ export default function ProfileScreen() {
       contentContainerStyle={[styles.scroll, { paddingTop: topInset + 12, paddingBottom: bottomInset + 100 }]}
       showsVerticalScrollIndicator={false}
     >
+      {/* Account card */}
+      <View style={styles.accountCard}>
+        <View style={styles.accountLeft}>
+          {user?.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+          ) : (
+            <View style={styles.avatar}>
+              <Feather name="user" size={28} color={Colors.accent} />
+            </View>
+          )}
+          <View style={styles.accountInfo}>
+            <Text style={styles.profileName}>{user?.name ?? "TraffIQ User"}</Text>
+            <Text style={styles.accountEmail} numberOfLines={1}>{user?.email}</Text>
+            {user?.isGuest ? (
+              <View style={styles.guestPill}>
+                <Feather name="user" size={10} color={Colors.textMuted} />
+                <Text style={styles.guestPillText}>Guest Mode</Text>
+              </View>
+            ) : (
+              <View style={styles.googlePill}>
+                <MaterialCommunityIcons name="google" size={11} color={Colors.info} />
+                <Text style={styles.googlePillText}>Google Account</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <Pressable
+          onPress={() => Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+            { text: "Cancel", style: "cancel" },
+            { text: "Sign Out", style: "destructive", onPress: signOut },
+          ])}
+          style={styles.signOutBtn}
+        >
+          <Feather name="log-out" size={18} color={Colors.textSecondary} />
+        </Pressable>
+      </View>
+
       {/* Profile header */}
       <View style={styles.profileCard}>
         <View style={styles.avatarSection}>
-          <View style={styles.avatar}>
-            <Feather name="user" size={32} color={Colors.accent} />
-          </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>Road Watcher</Text>
             <View style={[styles.riskBadge, { borderColor: getRiskColor() }]}>
               <View style={[styles.riskDot, { backgroundColor: getRiskColor() }]} />
               <Text style={[styles.riskText, { color: getRiskColor() }]}>
@@ -225,7 +261,63 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
-  scroll: { paddingHorizontal: 20, gap: 28 },
+  scroll: { paddingHorizontal: 20, gap: 24 },
+  accountCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  accountLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  avatarImg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: Colors.accent + "44",
+  },
+  accountInfo: { flex: 1, gap: 4 },
+  accountEmail: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
+  googlePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    backgroundColor: Colors.info + "18",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.info + "33",
+  },
+  googlePillText: { fontFamily: "Inter_500Medium", fontSize: 10, color: Colors.info },
+  guestPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    backgroundColor: Colors.card,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  guestPillText: { fontFamily: "Inter_500Medium", fontSize: 10, color: Colors.textMuted },
+  signOutBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
   profileCard: {
     backgroundColor: Colors.card,
     borderRadius: 24,

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "RoadWatch",
+    "name": "TraffIQ",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "traffiq",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,20 +15,30 @@
     },
     "ios": {
       "supportsTablet": false,
+      "bundleIdentifier": "org.tukutuku.traffiq",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "RoadWatch needs your location to track your journey and detect overspeed events.",
-        "NSLocationAlwaysUsageDescription": "RoadWatch needs your location for continuous journey tracking.",
-        "NSCameraUsageDescription": "RoadWatch uses the camera to capture evidence during Emergency Mode.",
-        "NSPhotoLibraryUsageDescription": "RoadWatch saves evidence photos to your library."
+        "NSLocationWhenInUseUsageDescription": "TraffIQ needs your location to track your journey and detect speeding events.",
+        "NSLocationAlwaysUsageDescription": "TraffIQ needs background location for continuous journey tracking.",
+        "NSCameraUsageDescription": "TraffIQ uses the camera to capture road incident evidence.",
+        "NSPhotoLibraryUsageDescription": "TraffIQ saves incident photos to your library."
       }
     },
     "android": {
+      "package": "org.tukutuku.traffiq",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#0A1628"
+      },
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE"
       ]
     },
     "web": {
@@ -46,7 +56,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "RoadWatch needs your location to track journey safety."
+          "locationAlwaysAndWhenInUsePermission": "TraffIQ needs your location to track journey safety and detect speeding."
         }
       ]
     ],
