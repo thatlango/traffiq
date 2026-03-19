@@ -81,8 +81,8 @@ export default function MapView() {
   const [dateFilter,    setDateFilter]    = useState("all");
   const [activeTypes,   setActiveTypes]   = useState<Set<string>>(new Set(Object.keys(INCIDENT_META)));
 
-  const incidents = useQuery({ queryKey: ["recent-incidents"], queryFn: api.recentIncidents, refetchInterval: 30_000 });
-  const cities    = useQuery({ queryKey: ["cities"],           queryFn: api.signupsByCity,   refetchInterval: 60_000 });
+  const incidents = useQuery({ queryKey: ["recent-incidents"], queryFn: api.recentIncidents, refetchInterval: 5_000 });
+  const cities    = useQuery({ queryKey: ["cities"],           queryFn: api.signupsByCity,   refetchInterval: 15_000 });
 
   const toggleType = (type: string) =>
     setActiveTypes(prev => {
