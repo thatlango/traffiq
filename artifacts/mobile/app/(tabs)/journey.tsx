@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useJourney, TransportMode } from "@/context/JourneyContext";
 import SpeedMeter from "@/components/SpeedMeter";
-import ModeSelector from "@/components/ModeSelector";
 import AlertBanner from "@/components/AlertBanner";
 import Colors from "@/constants/colors";
 
@@ -25,10 +24,30 @@ function formatDuration(ms: number) {
   return `${m}m ${s % 60}s`;
 }
 
+const MODES: { key: TransportMode; icon: string; label: string; limit: number }[] = [
+  { key: "car", icon: "car-front", label: "Car", limit: 50 },
+  { key: "taxi", icon: "taxi", label: "Taxi", limit: 50 },
+  { key: "bus", icon: "bus", label: "Bus", limit: 60 },
+  { key: "boda", icon: "motorbike", label: "Boda", limit: 45 },
+  { key: "bicycle", icon: "bicycle", label: "Bicycle", limit: 30 },
+  { key: "walking", icon: "walk", label: "Walk", limit: 10 },
+];
+
+// Map MaterialCommunityIcons names to Feather equivalents for TS safety
+const MODE_FEATHER: Record<TransportMode, string> = {
+  car: "navigation",
+  taxi: "map",
+  bus: "map-pin",
+  boda: "zap",
+  bicycle: "activity",
+  walking: "user",
+};
+
 export default function JourneyScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
+
   const {
     isTracking,
     currentSpeed,
@@ -52,15 +71,13 @@ export default function JourneyScreen() {
 
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const startBtnScale = useRef(new Animated.Value(1)).current;
   const [loading, setLoading] = useState(false);
+  const btnScale = useRef(new Animated.Value(1)).current;
   const roadAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (isTracking && currentJourney) {
-      timerRef.current = setInterval(() => {
-        setElapsed(Date.now() - currentJourney.startTime);
-      }, 1000);
+      timerRef.current = setInterval(() => setElapsed(Date.now() - currentJourney.startTime), 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
       setElapsed(0);
@@ -68,47 +85,40 @@ export default function JourneyScreen() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTracking, currentJourney]);
 
-  // Animate road name strip in when it appears
   useEffect(() => {
-    if (currentRoadName) {
-      Animated.spring(roadAnim, { toValue: 1, tension: 80, friction: 10, useNativeDriver: true }).start();
-    } else {
-      roadAnim.setValue(0);
-    }
+    Animated.spring(roadAnim, {
+      toValue: currentRoadName ? 1 : 0,
+      tension: 80, friction: 10, useNativeDriver: true,
+    }).start();
   }, [currentRoadName]);
 
   const handleStartStop = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Animated.sequence([
-      Animated.timing(startBtnScale, { toValue: 0.92, duration: 100, useNativeDriver: true }),
-      Animated.timing(startBtnScale, { toValue: 1, duration: 100, useNativeDriver: true }),
+      Animated.timing(btnScale, { toValue: 0.92, duration: 80, useNativeDriver: true }),
+      Animated.timing(btnScale, { toValue: 1, duration: 120, useNativeDriver: true }),
     ]).start();
     setLoading(true);
     try {
-      if (isTracking) {
-        await stopJourney();
-      } else {
-        await startJourney(selectedMode);
-      }
+      if (isTracking) await stopJourney();
+      else await startJourney(selectedMode);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleShare = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await shareJourneyWithKin();
-  };
-
   const overspeedAmt = Math.max(0, currentSpeed - speedLimit);
+  const journeyDistance = currentJourney
+    ? (currentJourney.route.length * 0.01).toFixed(2)
+    : "0.00";
 
   return (
     <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: topInset + 12, paddingBottom: bottomInset + 120 }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset + 12, paddingBottom: bottomInset + 130 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Alerts */}
+        {/* Alert */}
         {alerts.slice(0, 1).map(a => (
           <AlertBanner key={a.id} alert={a} onDismiss={() => dismissAlert(a.id)} />
         ))}
@@ -118,31 +128,21 @@ export default function JourneyScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{isTracking ? "Journey Active" : "Start Journey"}</Text>
             <Text style={styles.subtitle}>
-              {isTracking ? formatDuration(elapsed) : "Select mode and begin tracking"}
+              {isTracking ? formatDuration(elapsed) : "Choose your mode and go"}
             </Text>
           </View>
 
           {isTracking && (
-            <View style={styles.headerActions}>
-              {/* Share button */}
+            <View style={styles.actions}>
               <Pressable
-                onPress={handleShare}
-                style={[styles.actionBtn, sharingJourney && styles.actionBtnActive]}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); shareJourneyWithKin(); }}
+                style={[styles.actionBtn, sharingJourney && styles.actionBtnOn]}
               >
-                <Feather
-                  name="share-2"
-                  size={18}
-                  color={sharingJourney ? Colors.success : Colors.textSecondary}
-                />
+                <Feather name="share-2" size={18} color={sharingJourney ? Colors.success : Colors.textSecondary} />
               </Pressable>
-
-              {/* Emergency button */}
               <Pressable
-                onPress={() => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                  toggleEmergency();
-                }}
-                style={[styles.actionBtn, styles.emergencyBtn, emergencyMode && styles.emergencyBtnActive]}
+                onPress={() => { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); toggleEmergency(); }}
+                style={[styles.actionBtn, styles.actionBtnRed, emergencyMode && styles.actionBtnRedOn]}
               >
                 <Feather name="radio" size={18} color={emergencyMode ? "#fff" : Colors.danger} />
               </Pressable>
@@ -150,54 +150,58 @@ export default function JourneyScreen() {
           )}
         </View>
 
-        {/* Live road name strip */}
+        {/* Road name strip */}
         {isTracking && currentRoadName && (
-          <Animated.View
-            style={[
-              styles.roadStrip,
-              {
-                opacity: roadAnim,
-                transform: [{ translateY: roadAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }],
-              },
-            ]}
-          >
-            <View style={styles.roadStripLeft}>
-              <View style={styles.roadIconCircle}>
-                <Feather name="map-pin" size={13} color={Colors.accent} />
-              </View>
+          <Animated.View style={[styles.roadStrip, {
+            opacity: roadAnim,
+            transform: [{ translateY: roadAnim.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
+          }]}>
+            <View style={styles.roadLeft}>
+              <View style={styles.roadDot} />
               <View>
-                <Text style={styles.roadLabel}>Currently on</Text>
+                <Text style={styles.roadCaption}>Currently on</Text>
                 <Text style={styles.roadName}>{currentRoadName}</Text>
               </View>
             </View>
             {sharingJourney && (
-              <View style={styles.sharingBadge}>
+              <View style={styles.sharingPill}>
                 <View style={styles.sharingDot} />
-                <Text style={styles.sharingText}>
-                  Sharing{nextOfKin.length > 0 ? ` · ${nextOfKin.length}` : ""}
-                </Text>
+                <Text style={styles.sharingText}>Sharing{nextOfKin.length > 0 ? ` · ${nextOfKin.length}` : ""}</Text>
               </View>
             )}
           </Animated.View>
         )}
 
-        {/* Sharing indicator when no road name yet */}
-        {isTracking && !currentRoadName && sharingJourney && (
-          <View style={[styles.roadStrip, { justifyContent: "center" }]}>
-            <View style={styles.sharingBadge}>
-              <View style={styles.sharingDot} />
-              <Text style={styles.sharingText}>
-                Journey being shared{nextOfKin.length > 0 ? ` with ${nextOfKin.length} contact${nextOfKin.length > 1 ? "s" : ""}` : ""}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Mode selector */}
+        {/* Transport mode selector — only when not tracking */}
         {!isTracking && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Transport Mode</Text>
-            <ModeSelector selected={selectedMode} onSelect={setSelectedMode} />
+          <View style={styles.modeSection}>
+            <Text style={styles.modeSectionLabel}>Transport Mode</Text>
+            <View style={styles.modeGrid}>
+              {MODES.map(m => {
+                const isSelected = selectedMode === m.key;
+                return (
+                  <Pressable
+                    key={m.key}
+                    onPress={() => { Haptics.selectionAsync(); setSelectedMode(m.key); }}
+                    style={({ pressed }) => [
+                      styles.modeCard,
+                      isSelected && styles.modeCardSelected,
+                      pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
+                    ]}
+                  >
+                    <Feather
+                      name={MODE_FEATHER[m.key] as any}
+                      size={22}
+                      color={isSelected ? Colors.primary : Colors.textSecondary}
+                    />
+                    <Text style={[styles.modeLabel, isSelected && styles.modeLabelSelected]}>{m.label}</Text>
+                    <Text style={[styles.modeLimit, isSelected && { color: Colors.primary + "cc" }]}>
+                      {m.limit} km/h
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         )}
 
@@ -214,67 +218,49 @@ export default function JourneyScreen() {
 
         {/* Live stats while tracking */}
         {isTracking && currentJourney && (
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Feather name="zap" size={18} color={Colors.accent} />
-              <Text style={styles.statValue}>{Math.round(currentJourney.maxSpeed)}</Text>
-              <Text style={styles.statLabel}>Max km/h</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Feather name="trending-up" size={18} color={Colors.success} />
-              <Text style={styles.statValue}>{Math.round(currentJourney.avgSpeed)}</Text>
-              <Text style={styles.statLabel}>Avg km/h</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Feather name="alert-triangle" size={18} color={Colors.danger} />
-              <Text style={styles.statValue}>{currentJourney.overspeedEvents}</Text>
-              <Text style={styles.statLabel}>Overspeed</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Feather name="map-pin" size={18} color={Colors.info} />
-              <Text style={styles.statValue}>{currentJourney.route.length}</Text>
-              <Text style={styles.statLabel}>GPS Points</Text>
-            </View>
+          <View style={styles.statsRow}>
+            {[
+              { icon: "zap", value: `${Math.round(currentJourney.maxSpeed)}`, label: "Max km/h", color: Colors.accent },
+              { icon: "trending-up", value: `${Math.round(currentJourney.avgSpeed)}`, label: "Avg km/h", color: Colors.success },
+              { icon: "alert-triangle", value: `${currentJourney.overspeedEvents}`, label: "Overspeed", color: Colors.danger },
+              { icon: "map-pin", value: journeyDistance, label: "Distance km", color: Colors.info },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.label}>
+                <View style={styles.statItem}>
+                  <Feather name={s.icon as any} size={15} color={s.color} />
+                  <Text style={[styles.statVal, { color: s.color }]}>{s.value}</Text>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={styles.statDivider} />}
+              </React.Fragment>
+            ))}
           </View>
         )}
 
-        {/* Next of kin hint when no kin and not sharing */}
-        {isTracking && nextOfKin.length === 0 && (
-          <View style={styles.kinHint}>
-            <Feather name="users" size={16} color={Colors.textMuted} />
-            <Text style={styles.kinHintText}>
-              Add next of kin in Profile to share your journey with them
-            </Text>
-          </View>
-        )}
-
-        {/* Recent journeys */}
+        {/* Past journeys */}
         {!isTracking && pastJourneys.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Recent Journeys</Text>
-            {pastJourneys.slice(0, 5).map((j) => {
+            {pastJourneys.slice(0, 5).map(j => {
               const dur = j.endTime ? j.endTime - j.startTime : 0;
               const scoreColor =
-                j.safetyScore >= 90 ? Colors.success
-                : j.safetyScore >= 70 ? Colors.scoreGood
-                : j.safetyScore >= 50 ? Colors.warning
-                : Colors.danger;
+                j.safetyScore >= 90 ? Colors.success :
+                j.safetyScore >= 70 ? Colors.scoreGood :
+                j.safetyScore >= 50 ? Colors.warning : Colors.danger;
               return (
                 <View key={j.id} style={styles.journeyCard}>
-                  <View style={styles.journeyLeft}>
-                    <View style={[styles.modeBadge, { backgroundColor: Colors.accent + "22" }]}>
-                      <Text style={styles.modeText}>{j.mode.toUpperCase()}</Text>
-                    </View>
-                    <View>
-                      <Text style={styles.journeyDate}>
-                        {new Date(j.startTime).toLocaleDateString()} · {formatDuration(dur)}
-                      </Text>
-                      <Text style={styles.journeyStats}>
-                        Max {Math.round(j.maxSpeed)} km/h · {j.overspeedEvents} overspeed events
-                      </Text>
-                    </View>
+                  <View style={[styles.journeyModeBadge, { backgroundColor: Colors.accent + "20" }]}>
+                    <Text style={styles.journeyModeText}>{j.mode.toUpperCase()}</Text>
                   </View>
-                  <View style={[styles.scoreBadge, { backgroundColor: scoreColor + "22", borderColor: scoreColor }]}>
+                  <View style={styles.journeyMeta}>
+                    <Text style={styles.journeyDate}>
+                      {new Date(j.startTime).toLocaleDateString()} · {formatDuration(dur)}
+                    </Text>
+                    <Text style={styles.journeyStats}>
+                      Max {Math.round(j.maxSpeed)} km/h · {j.overspeedEvents} overspeed
+                    </Text>
+                  </View>
+                  <View style={[styles.scoreBadge, { backgroundColor: scoreColor + "20", borderColor: scoreColor }]}>
                     <Text style={[styles.scoreText, { color: scoreColor }]}>{j.safetyScore}</Text>
                   </View>
                 </View>
@@ -284,9 +270,9 @@ export default function JourneyScreen() {
         )}
       </ScrollView>
 
-      {/* Start/Stop button */}
-      <View style={[styles.fab, { bottom: bottomInset + 90 }]}>
-        <Animated.View style={{ transform: [{ scale: startBtnScale }] }}>
+      {/* Start / Stop FAB */}
+      <View style={[styles.fab, { bottom: bottomInset + 88 }]}>
+        <Animated.View style={{ transform: [{ scale: btnScale }] }}>
           <Pressable
             onPress={handleStartStop}
             disabled={loading}
@@ -294,11 +280,11 @@ export default function JourneyScreen() {
           >
             <Feather
               name={isTracking ? "square" : "play"}
-              size={28}
+              size={26}
               color={isTracking ? Colors.danger : Colors.primary}
             />
             <Text style={[styles.startBtnText, isTracking && { color: Colors.danger }]}>
-              {loading ? "..." : isTracking ? "Stop Journey" : "Start Journey"}
+              {loading ? "…" : isTracking ? "Stop Journey" : "Start Journey"}
             </Text>
           </Pressable>
         </Animated.View>
@@ -309,151 +295,126 @@ export default function JourneyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
-  scroll: { paddingHorizontal: 20, gap: 20 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-  },
+  scroll: { paddingHorizontal: 16, gap: 20 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   title: { fontFamily: "Inter_700Bold", fontSize: 26, color: Colors.text, letterSpacing: -0.5 },
   subtitle: { fontFamily: "Inter_400Regular", fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
-  headerActions: { flexDirection: "row", gap: 10, alignItems: "center" },
+  actions: { flexDirection: "row", gap: 10 },
   actionBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    width: 44, height: 44, borderRadius: 22,
+    borderWidth: 1.5, borderColor: Colors.border,
     backgroundColor: Colors.card,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center", justifyContent: "center",
   },
-  actionBtnActive: {
-    borderColor: Colors.success + "88",
-    backgroundColor: Colors.success + "18",
-  },
-  emergencyBtn: { borderColor: Colors.danger },
-  emergencyBtnActive: { backgroundColor: Colors.danger, borderColor: Colors.danger },
+  actionBtnOn: { borderColor: Colors.success + "88", backgroundColor: Colors.success + "18" },
+  actionBtnRed: { borderColor: Colors.danger },
+  actionBtnRedOn: { backgroundColor: Colors.danger, borderColor: Colors.danger },
+
+  // Road strip
   roadStrip: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: Colors.accent + "33",
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    borderWidth: 1, borderColor: Colors.accent + "33",
   },
-  roadStripLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
-  roadIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.accent + "22",
-    alignItems: "center",
-    justifyContent: "center",
+  roadLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  roadDot: {
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: Colors.accent,
+    shadowColor: Colors.accent, shadowRadius: 6, shadowOpacity: 0.6,
   },
-  roadLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: Colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 },
+  roadCaption: { fontFamily: "Inter_400Regular", fontSize: 10, color: Colors.textMuted, textTransform: "uppercase", letterSpacing: 0.5 },
   roadName: { fontFamily: "Inter_700Bold", fontSize: 15, color: Colors.text, marginTop: 1 },
-  sharingBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
+  sharingPill: {
+    flexDirection: "row", alignItems: "center", gap: 5,
     backgroundColor: Colors.success + "18",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.success + "44",
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 14, borderWidth: 1, borderColor: Colors.success + "44",
   },
   sharingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.success },
   sharingText: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.success },
-  section: { gap: 14 },
-  sectionTitle: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textTransform: "uppercase",
-    letterSpacing: 1,
+
+  // Mode selector
+  modeSection: { gap: 12 },
+  modeSectionLabel: {
+    fontFamily: "Inter_600SemiBold", fontSize: 13,
+    color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 1,
   },
-  speedSection: { alignItems: "center", gap: 16 },
+  modeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  modeCard: {
+    width: "31%",
+    backgroundColor: Colors.card,
+    borderRadius: 18, padding: 14,
+    alignItems: "center", gap: 6,
+    borderWidth: 1.5, borderColor: Colors.border,
+  },
+  modeCardSelected: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 10, elevation: 5,
+  },
+  modeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.text },
+  modeLabelSelected: { color: Colors.primary },
+  modeLimit: { fontFamily: "Inter_400Regular", fontSize: 10, color: Colors.textMuted },
+
+  // Speed
+  speedSection: { alignItems: "center", gap: 14 },
   overspeedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: Colors.danger + "22",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.danger + "44",
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: Colors.danger + "20",
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1, borderColor: Colors.danger + "44",
   },
   overspeedText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.danger },
-  statsGrid: { flexDirection: "row", gap: 10 },
-  statCard: {
-    flex: 1,
+
+  // Stats row
+  statsRow: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    padding: 14,
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 20, flexDirection: "row",
+    paddingVertical: 16, paddingHorizontal: 8,
+    borderWidth: 1, borderColor: Colors.border,
   },
-  statValue: { fontFamily: "Inter_700Bold", fontSize: 22, color: Colors.text },
-  statLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
-  kinHint: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  kinHintText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    color: Colors.textMuted,
-    flex: 1,
-    lineHeight: 18,
+  statItem: { flex: 1, alignItems: "center", gap: 3 },
+  statVal: { fontFamily: "Inter_700Bold", fontSize: 20 },
+  statLabel: { fontFamily: "Inter_400Regular", fontSize: 10, color: Colors.textSecondary },
+  statDivider: { width: 1, backgroundColor: Colors.border, marginVertical: 6 },
+
+  // Past journeys
+  section: { gap: 10 },
+  sectionTitle: {
+    fontFamily: "Inter_600SemiBold", fontSize: 13,
+    color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 1,
   },
   journeyCard: {
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 16, padding: 14,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderWidth: 1, borderColor: Colors.border,
   },
-  journeyLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
-  modeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  modeText: { fontFamily: "Inter_700Bold", fontSize: 10, color: Colors.accent, letterSpacing: 0.5 },
+  journeyModeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  journeyModeText: { fontFamily: "Inter_700Bold", fontSize: 10, color: Colors.accent, letterSpacing: 0.5 },
+  journeyMeta: { flex: 1, gap: 2 },
   journeyDate: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.text },
-  journeyStats: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
-  scoreBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1.5, alignItems: "center" },
+  journeyStats: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
+  scoreBadge: {
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 10, borderWidth: 1.5, alignItems: "center",
+  },
   scoreText: { fontFamily: "Inter_700Bold", fontSize: 16 },
+
+  // FAB
   fab: { position: "absolute", left: 20, right: 20, alignItems: "center" },
   startBtn: {
     backgroundColor: Colors.accent,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 18,
-    paddingHorizontal: 48,
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 18, paddingHorizontal: 48,
     borderRadius: 30,
     shadowColor: Colors.accent,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
   },
-  stopBtn: { backgroundColor: Colors.danger + "22", borderWidth: 2, borderColor: Colors.danger },
+  stopBtn: { backgroundColor: Colors.danger + "20", borderWidth: 2, borderColor: Colors.danger, shadowOpacity: 0 },
   startBtnText: { fontFamily: "Inter_700Bold", fontSize: 18, color: Colors.primary },
 });

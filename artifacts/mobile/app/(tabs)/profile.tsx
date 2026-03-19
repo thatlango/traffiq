@@ -18,32 +18,16 @@ import { useAuth } from "@/context/AuthContext";
 import SafetyScoreRing from "@/components/SafetyScoreRing";
 import Colors from "@/constants/colors";
 
-interface Badge {
-  id: string;
-  label: string;
-  icon: string;
-  color: string;
-  earned: boolean;
-  description: string;
-}
-
-function getBadges(trips: number, score: number, overspeedCount: number): Badge[] {
+function getBadges(trips: number, score: number, overspeedCount: number) {
   return [
-    { id: "first_trip", label: "First Trip", icon: "flag", color: Colors.accent, earned: trips >= 1, description: "Complete your first journey" },
-    { id: "safe_driver", label: "Safe Driver", icon: "shield", color: Colors.success, earned: score >= 70 && trips >= 5, description: "Maintain 70+ score over 5 trips" },
-    { id: "100_trips", label: "100 Trips", icon: "award", color: Colors.info, earned: trips >= 100, description: "Complete 100 journeys" },
-    { id: "no_overspeed", label: "Speed Compliant", icon: "activity", color: Colors.success, earned: overspeedCount === 0 && trips >= 3, description: "Zero overspeed events in 3 trips" },
-    { id: "trusted", label: "Community Trusted", icon: "users", color: Colors.purple, earned: trips >= 20 && score >= 80, description: "20 trips with 80+ safety score" },
-    { id: "certified", label: "TQ Certified", icon: "check-circle", color: Colors.accent, earned: score >= 90 && trips >= 10, description: "Top tier safety champion" },
+    { id: "first_trip", label: "First Trip", icon: "flag", color: Colors.accent, earned: trips >= 1 },
+    { id: "safe_driver", label: "Safe Driver", icon: "shield", color: Colors.success, earned: score >= 70 && trips >= 5 },
+    { id: "speed_ok", label: "Speed Compliant", icon: "activity", color: Colors.success, earned: overspeedCount === 0 && trips >= 3 },
+    { id: "trusted", label: "Community Trusted", icon: "users", color: Colors.purple, earned: trips >= 20 && score >= 80 },
+    { id: "100_trips", label: "100 Trips", icon: "award", color: Colors.info, earned: trips >= 100 },
+    { id: "certified", label: "TQ Certified", icon: "check-circle", color: Colors.accent, earned: score >= 90 && trips >= 10 },
   ];
 }
-
-const STAT_ITEMS = [
-  { icon: "navigation", label: "Total Trips", key: "trips" as const, color: Colors.accent },
-  { icon: "map-pin", label: "Distance (km)", key: "distance" as const, color: Colors.info },
-  { icon: "clock", label: "Hours Tracked", key: "hours" as const, color: Colors.success },
-  { icon: "alert-triangle", label: "Overspeed Events", key: "overspeed" as const, color: Colors.warning },
-];
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -56,61 +40,33 @@ export default function ProfileScreen() {
   const [kinName, setKinName] = useState("");
   const [kinPhone, setKinPhone] = useState("");
 
-  const totalOverspeedEvents = pastJourneys.reduce((acc, j) => acc + j.overspeedEvents, 0);
-  const totalDurationMs = pastJourneys.reduce((acc, j) => acc + ((j.endTime ?? 0) - j.startTime), 0);
-  const totalHours = (totalDurationMs / 3600000).toFixed(1);
+  const totalOverspeed = pastJourneys.reduce((a, j) => a + j.overspeedEvents, 0);
+  const totalHours = (pastJourneys.reduce((a, j) => a + ((j.endTime ?? 0) - j.startTime), 0) / 3600000).toFixed(1);
+  const badges = getBadges(totalTrips, safetyScore, totalOverspeed);
+  const earnedCount = badges.filter(b => b.earned).length;
 
-  const badges = getBadges(totalTrips, safetyScore, totalOverspeedEvents);
-  const earnedBadges = badges.filter(b => b.earned);
+  const riskColor =
+    riskLevel === "excellent" ? Colors.success :
+    riskLevel === "good" ? Colors.scoreGood :
+    riskLevel === "moderate" ? Colors.warning : Colors.danger;
+
+  const riskLabel =
+    riskLevel === "excellent" ? "Excellent Driver" :
+    riskLevel === "good" ? "Safe Driver" :
+    riskLevel === "moderate" ? "Moderate Risk" : "High Risk";
 
   const handleAddKin = async () => {
-    if (!kinName.trim()) {
-      Alert.alert("Missing Name", "Please enter a name for your next of kin.");
-      return;
-    }
-    if (!kinPhone.trim()) {
-      Alert.alert("Missing Phone", "Please enter a phone number.");
-      return;
-    }
+    if (!kinName.trim() || !kinPhone.trim()) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await addNextOfKin({ name: kinName.trim(), phone: kinPhone.trim() });
-    setKinName("");
-    setKinPhone("");
-    setShowKinForm(false);
+    setKinName(""); setKinPhone(""); setShowKinForm(false);
   };
 
-  const handleRemoveKin = (id: string, name: string) => {
-    Alert.alert(
-      "Remove Contact",
-      `Remove ${name} from your next of kin?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            removeNextOfKin(id);
-          },
-        },
-      ]
-    );
-  };
-
-  const getRiskColor = () => {
-    switch (riskLevel) {
-      case "excellent": return Colors.success;
-      case "good": return Colors.scoreGood;
-      case "moderate": return Colors.warning;
-      case "high": return Colors.danger;
-    }
-  };
-
-  const stats: Record<string, string | number> = {
-    trips: totalTrips,
-    distance: totalDistance.toFixed(1),
-    hours: totalHours,
-    overspeed: totalOverspeedEvents,
+  const confirmSignOut = () => {
+    Alert.alert("Sign Out", "Sign out of TraffIQ?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: signOut },
+    ]);
   };
 
   return (
@@ -119,295 +75,352 @@ export default function ProfileScreen() {
       contentContainerStyle={[styles.scroll, { paddingTop: topInset + 12, paddingBottom: bottomInset + 100 }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Account card */}
-      <View style={styles.accountCard}>
-        <View style={styles.accountLeft}>
+      {/* ── Hero card: avatar + score in one card ── */}
+      <View style={styles.heroCard}>
+        <View style={styles.heroLeft}>
           {user?.avatarUrl ? (
-            <Image source={{ uri: user.avatarUrl }} style={styles.avatarImg} />
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
-            <View style={styles.avatar}>
+            <View style={styles.avatarPlaceholder}>
               <Feather name="user" size={28} color={Colors.accent} />
             </View>
           )}
-          <View style={styles.accountInfo}>
-            <Text style={styles.profileName}>{user?.name ?? "TraffIQ User"}</Text>
-            <Text style={styles.accountEmail} numberOfLines={1}>{user?.email}</Text>
-            {user?.isGuest ? (
-              <View style={styles.guestPill}>
-                <Feather name="user" size={10} color={Colors.textMuted} />
-                <Text style={styles.guestPillText}>Guest Mode</Text>
-              </View>
-            ) : (
-              <View style={styles.googlePill}>
-                <MaterialCommunityIcons name="google" size={11} color={Colors.info} />
-                <Text style={styles.googlePillText}>Google Account</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        <Pressable
-          onPress={() => Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-            { text: "Cancel", style: "cancel" },
-            { text: "Sign Out", style: "destructive", onPress: signOut },
-          ])}
-          style={styles.signOutBtn}
-        >
-          <Feather name="log-out" size={18} color={Colors.textSecondary} />
-        </Pressable>
-      </View>
-
-      {/* Profile header */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatarSection}>
-          <View style={styles.profileInfo}>
-            <View style={[styles.riskBadge, { borderColor: getRiskColor() }]}>
-              <View style={[styles.riskDot, { backgroundColor: getRiskColor() }]} />
-              <Text style={[styles.riskText, { color: getRiskColor() }]}>
-                {riskLevel === "excellent" ? "Excellent Driver" : riskLevel === "good" ? "Safe Driver" : riskLevel === "moderate" ? "Moderate Risk" : "High Risk"}
-              </Text>
+          <View style={styles.heroInfo}>
+            <Text style={styles.heroName} numberOfLines={1}>{user?.name ?? "TraffIQ User"}</Text>
+            {user?.email ? (
+              <Text style={styles.heroEmail} numberOfLines={1}>{user.email}</Text>
+            ) : null}
+            <View style={styles.accountBadge}>
+              {user?.isGuest ? (
+                <>
+                  <Feather name="user" size={10} color={Colors.textMuted} />
+                  <Text style={[styles.accountBadgeText, { color: Colors.textMuted }]}>Guest</Text>
+                </>
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="google" size={10} color={Colors.info} />
+                  <Text style={[styles.accountBadgeText, { color: Colors.info }]}>Google</Text>
+                </>
+              )}
+            </View>
+            <View style={[styles.riskChip, { borderColor: riskColor + "66" }]}>
+              <View style={[styles.riskDot, { backgroundColor: riskColor }]} />
+              <Text style={[styles.riskText, { color: riskColor }]}>{riskLabel}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.scoreSection}>
-          <SafetyScoreRing score={safetyScore} size={130} showLabel />
-          <Text style={styles.scoreCaption}>Safety Score</Text>
+        <View style={styles.heroRight}>
+          <SafetyScoreRing score={safetyScore} size={110} showLabel />
+          <Pressable onPress={confirmSignOut} style={styles.signOutBtn}>
+            <Feather name="log-out" size={15} color={Colors.textSecondary} />
+            <Text style={styles.signOutText}>Sign out</Text>
+          </Pressable>
         </View>
       </View>
 
-      {/* Stats grid */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Statistics</Text>
-        <View style={styles.statsGrid}>
-          {STAT_ITEMS.map(item => (
-            <View key={item.key} style={styles.statCard}>
-              <Feather name={item.icon as any} size={20} color={item.color} />
-              <Text style={styles.statValue}>{stats[item.key]}</Text>
-              <Text style={styles.statLabel}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Safety breakdown */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Safety Breakdown</Text>
+      {/* ── Stats row ── */}
+      <View style={styles.statsRow}>
         {[
-          { label: "Speed Compliance", value: Math.max(0, 100 - totalOverspeedEvents * 3), icon: "activity" },
-          { label: "Smooth Driving", value: 88, icon: "trending-up" },
-          { label: "Route Safety", value: 92, icon: "map" },
-          { label: "Passenger Ratings", value: 95, icon: "star" },
-        ].map(item => (
-          <View key={item.label} style={styles.breakdownRow}>
-            <Feather name={item.icon as any} size={16} color={Colors.textSecondary} style={{ marginTop: 2 }} />
-            <View style={styles.breakdownInfo}>
-              <View style={styles.breakdownHeader}>
-                <Text style={styles.breakdownLabel}>{item.label}</Text>
-                <Text style={styles.breakdownValue}>{item.value}%</Text>
-              </View>
-              <View style={styles.progressBg}>
-                <View
-                  style={[styles.progressFill, {
-                    width: `${item.value}%` as any,
-                    backgroundColor: item.value >= 80 ? Colors.success : item.value >= 60 ? Colors.warning : Colors.danger,
-                  }]}
-                />
-              </View>
+          { value: totalTrips.toString(), label: "Trips", icon: "navigation", color: Colors.accent },
+          { value: totalDistance.toFixed(0), label: "km", icon: "map-pin", color: Colors.info },
+          { value: totalHours, label: "Hours", icon: "clock", color: Colors.success },
+          { value: totalOverspeed.toString(), label: "Overspeed", icon: "zap", color: Colors.warning },
+        ].map((s, i, arr) => (
+          <React.Fragment key={s.label}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
             </View>
-          </View>
+            {i < arr.length - 1 && <View style={styles.statDivider} />}
+          </React.Fragment>
         ))}
       </View>
 
-      {/* Badges */}
+      {/* ── Safety breakdown ── */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Safety Breakdown</Text>
+        <View style={styles.card}>
+          {[
+            { label: "Speed Compliance", value: Math.max(0, 100 - totalOverspeed * 3) },
+            { label: "Smooth Driving", value: 88 },
+            { label: "Route Safety", value: 92 },
+            { label: "Passenger Ratings", value: 95 },
+          ].map(item => {
+            const barColor = item.value >= 80 ? Colors.success : item.value >= 60 ? Colors.warning : Colors.danger;
+            return (
+              <View key={item.label} style={styles.breakdownRow}>
+                <View style={styles.breakdownHeader}>
+                  <Text style={styles.breakdownLabel}>{item.label}</Text>
+                  <Text style={[styles.breakdownVal, { color: barColor }]}>{item.value}%</Text>
+                </View>
+                <View style={styles.progressBg}>
+                  <View style={[styles.progressFill, { width: `${item.value}%` as any, backgroundColor: barColor }]} />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* ── Badges ── */}
+      <View style={styles.section}>
+        <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Badges</Text>
-          <Text style={styles.badgeCount}>{earnedBadges.length}/{badges.length} Earned</Text>
+          <Text style={styles.badgeCount}>{earnedCount}/{badges.length}</Text>
         </View>
         <View style={styles.badgeGrid}>
-          {badges.map(badge => (
-            <View key={badge.id} style={[styles.badgeCard, !badge.earned && styles.badgeCardLocked]}>
-              <View style={[styles.badgeIcon, { backgroundColor: badge.earned ? badge.color + "22" : Colors.border }]}>
-                <Feather name={badge.icon as any} size={24} color={badge.earned ? badge.color : Colors.textMuted} />
+          {badges.map(b => (
+            <View key={b.id} style={[styles.badgeCard, !b.earned && styles.badgeLocked]}>
+              <View style={[styles.badgeIcon, { backgroundColor: b.earned ? b.color + "22" : Colors.border + "80" }]}>
+                <Feather name={b.icon as any} size={22} color={b.earned ? b.color : Colors.textMuted} />
               </View>
-              <Text style={[styles.badgeLabel, !badge.earned && styles.badgeLabelLocked]}>{badge.label}</Text>
-              <Text style={styles.badgeDesc} numberOfLines={2}>{badge.description}</Text>
-              {!badge.earned && (
-                <View style={styles.lockedOverlay}>
-                  <Feather name="lock" size={14} color={Colors.textMuted} />
-                </View>
-              )}
+              <Text style={[styles.badgeLabel, !b.earned && { color: Colors.textMuted }]}>{b.label}</Text>
+              {!b.earned && <Feather name="lock" size={11} color={Colors.textMuted} style={styles.lockIcon} />}
             </View>
           ))}
         </View>
       </View>
 
-      {/* Leaderboard teaser */}
-      <View style={[styles.leaderCard, { borderColor: Colors.accent + "44" }]}>
-        <View style={styles.leaderRow}>
-          <View style={[styles.leaderIcon, { backgroundColor: Colors.accent + "22" }]}>
-            <MaterialCommunityIcons name="trophy" size={24} color={Colors.accent} />
-          </View>
-          <View style={styles.leaderInfo}>
-            <Text style={styles.leaderTitle}>Safe Driver Leaderboard</Text>
-            <Text style={styles.leaderSub}>Top 15% in your region this month</Text>
-          </View>
-          <Feather name="chevron-right" size={20} color={Colors.accent} />
+      {/* ── Next of Kin ── */}
+      <View style={styles.section}>
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Next of Kin</Text>
+          <Pressable
+            onPress={() => setShowKinForm(v => !v)}
+            style={styles.addBtn}
+          >
+            <Feather name={showKinForm ? "x" : "plus"} size={14} color={Colors.accent} />
+            <Text style={styles.addBtnText}>{showKinForm ? "Cancel" : "Add"}</Text>
+          </Pressable>
         </View>
+
+        {showKinForm && (
+          <View style={styles.kinForm}>
+            <TextInput
+              style={styles.kinInput}
+              placeholder="Name"
+              placeholderTextColor={Colors.textMuted}
+              value={kinName}
+              onChangeText={setKinName}
+            />
+            <TextInput
+              style={styles.kinInput}
+              placeholder="Phone number"
+              placeholderTextColor={Colors.textMuted}
+              value={kinPhone}
+              onChangeText={setKinPhone}
+              keyboardType="phone-pad"
+            />
+            <Pressable
+              onPress={handleAddKin}
+              disabled={!kinName.trim() || !kinPhone.trim()}
+              style={[styles.kinSaveBtn, (!kinName.trim() || !kinPhone.trim()) && { opacity: 0.5 }]}
+            >
+              <Text style={styles.kinSaveBtnText}>Save Contact</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {nextOfKin.length === 0 && !showKinForm ? (
+          <View style={styles.kinEmpty}>
+            <Feather name="users" size={20} color={Colors.textMuted} />
+            <Text style={styles.kinEmptyText}>Add contacts to share your live journey with them</Text>
+          </View>
+        ) : (
+          nextOfKin.map(k => (
+            <View key={k.id} style={styles.kinRow}>
+              <View style={styles.kinAvatar}>
+                <Text style={styles.kinAvatarText}>{k.name[0].toUpperCase()}</Text>
+              </View>
+              <View style={styles.kinInfo}>
+                <Text style={styles.kinName}>{k.name}</Text>
+                <Text style={styles.kinPhone}>{k.phone}</Text>
+              </View>
+              <Pressable
+                onPress={() => Alert.alert("Remove", `Remove ${k.name}?`, [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Remove", style: "destructive", onPress: () => removeNextOfKin(k.id) },
+                ])}
+                hitSlop={10}
+                style={styles.kinRemove}
+              >
+                <Feather name="trash-2" size={16} color={Colors.textMuted} />
+              </Pressable>
+            </View>
+          ))
+        )}
       </View>
+
+      {/* ── Leaderboard teaser ── */}
+      <Pressable style={styles.leaderCard}>
+        <View style={[styles.leaderIcon, { backgroundColor: Colors.accent + "20" }]}>
+          <MaterialCommunityIcons name="trophy" size={22} color={Colors.accent} />
+        </View>
+        <View style={styles.leaderInfo}>
+          <Text style={styles.leaderTitle}>Safe Driver Leaderboard</Text>
+          <Text style={styles.leaderSub}>Top 15% in your region this month</Text>
+        </View>
+        <Feather name="chevron-right" size={18} color={Colors.accent} />
+      </Pressable>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
-  scroll: { paddingHorizontal: 20, gap: 24 },
-  accountCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  accountLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
-  avatarImg: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: Colors.accent + "44",
-  },
-  accountInfo: { flex: 1, gap: 4 },
-  accountEmail: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
-  googlePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    alignSelf: "flex-start",
-    backgroundColor: Colors.info + "18",
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: Colors.info + "33",
-  },
-  googlePillText: { fontFamily: "Inter_500Medium", fontSize: 10, color: Colors.info },
-  guestPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    alignSelf: "flex-start",
-    backgroundColor: Colors.card,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  guestPillText: { fontFamily: "Inter_500Medium", fontSize: 10, color: Colors.textMuted },
-  signOutBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  profileCard: {
+  scroll: { paddingHorizontal: 16, gap: 20 },
+
+  // Hero
+  heroCard: {
     backgroundColor: Colors.card,
     borderRadius: 24,
-    padding: 20,
+    padding: 18,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: Colors.border,
+    gap: 12,
   },
-  avatarSection: { gap: 12, flex: 1 },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  heroLeft: { flexDirection: "row", alignItems: "flex-start", gap: 14, flex: 1 },
+  avatar: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: Colors.accent + "44" },
+  avatarPlaceholder: {
+    width: 60, height: 60, borderRadius: 30,
     backgroundColor: Colors.accent + "22",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: Colors.accent + "44",
+    borderWidth: 2, borderColor: Colors.accent + "44",
+    alignItems: "center", justifyContent: "center",
   },
-  profileInfo: { gap: 8 },
-  profileName: { fontFamily: "Inter_700Bold", fontSize: 20, color: Colors.text },
-  riskBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    borderWidth: 1.5,
+  heroInfo: { flex: 1, gap: 5 },
+  heroName: { fontFamily: "Inter_700Bold", fontSize: 17, color: Colors.text },
+  heroEmail: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
+  accountBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
     alignSelf: "flex-start",
+    backgroundColor: Colors.primary,
+    borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  accountBadgeText: { fontFamily: "Inter_500Medium", fontSize: 10 },
+  riskChip: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    alignSelf: "flex-start",
+    borderRadius: 20, borderWidth: 1.5,
+    paddingHorizontal: 8, paddingVertical: 4,
   },
   riskDot: { width: 6, height: 6, borderRadius: 3 },
-  riskText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
-  scoreSection: { alignItems: "center", gap: 6 },
-  scoreCaption: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
-  section: { gap: 16 },
-  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  sectionTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 1 },
-  badgeCount: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.accent },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  statCard: {
-    flex: 1,
-    minWidth: "44%",
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    padding: 16,
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  riskText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  heroRight: { alignItems: "center", gap: 8 },
+  signOutBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 12, borderWidth: 1, borderColor: Colors.border,
   },
-  statValue: { fontFamily: "Inter_700Bold", fontSize: 24, color: Colors.text },
-  statLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary, textAlign: "center" },
-  breakdownRow: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
-  breakdownInfo: { flex: 1, gap: 6 },
-  breakdownHeader: { flexDirection: "row", justifyContent: "space-between" },
-  breakdownLabel: { fontFamily: "Inter_500Medium", fontSize: 14, color: Colors.text },
-  breakdownValue: { fontFamily: "Inter_700Bold", fontSize: 14, color: Colors.text },
-  progressBg: { height: 6, backgroundColor: Colors.border, borderRadius: 3, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 3 },
-  badgeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  badgeCard: {
-    width: "30%",
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    padding: 14,
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    position: "relative",
-    overflow: "hidden",
-  },
-  badgeCardLocked: { opacity: 0.5 },
-  badgeIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  badgeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.text, textAlign: "center" },
-  badgeLabelLocked: { color: Colors.textMuted },
-  badgeDesc: { fontFamily: "Inter_400Regular", fontSize: 9, color: Colors.textMuted, textAlign: "center", lineHeight: 13 },
-  lockedOverlay: { position: "absolute", top: 8, right: 8 },
-  leaderCard: {
+  signOutText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
+
+  // Stats row
+  statsRow: {
     backgroundColor: Colors.card,
     borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
+    flexDirection: "row",
+    paddingVertical: 18,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  leaderRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  leaderIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  leaderInfo: { flex: 1, gap: 4 },
-  leaderTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: Colors.text },
+  statItem: { flex: 1, alignItems: "center", gap: 3 },
+  statValue: { fontFamily: "Inter_700Bold", fontSize: 22 },
+  statLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
+  statDivider: { width: 1, backgroundColor: Colors.border, marginVertical: 6 },
+
+  // Section
+  section: { gap: 12 },
+  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sectionTitle: {
+    fontFamily: "Inter_600SemiBold", fontSize: 13,
+    color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 1,
+  },
+  badgeCount: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.accent },
+  card: { backgroundColor: Colors.card, borderRadius: 20, padding: 16, gap: 16, borderWidth: 1, borderColor: Colors.border },
+
+  // Safety breakdown
+  breakdownRow: { gap: 6 },
+  breakdownHeader: { flexDirection: "row", justifyContent: "space-between" },
+  breakdownLabel: { fontFamily: "Inter_500Medium", fontSize: 13, color: Colors.text },
+  breakdownVal: { fontFamily: "Inter_700Bold", fontSize: 13 },
+  progressBg: { height: 6, backgroundColor: Colors.border, borderRadius: 3, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 3 },
+
+  // Badges
+  badgeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  badgeCard: {
+    width: "31%",
+    backgroundColor: Colors.card,
+    borderRadius: 18, padding: 14,
+    alignItems: "center", gap: 7,
+    borderWidth: 1, borderColor: Colors.border,
+    position: "relative",
+  },
+  badgeLocked: { opacity: 0.45 },
+  badgeIcon: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
+  badgeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: Colors.text, textAlign: "center" },
+  lockIcon: { position: "absolute", top: 8, right: 8 },
+
+  // Next of kin
+  addBtn: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    backgroundColor: Colors.accent + "18",
+    borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6,
+    borderWidth: 1, borderColor: Colors.accent + "44",
+  },
+  addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.accent },
+  kinForm: { backgroundColor: Colors.card, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: Colors.border },
+  kinInput: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12, padding: 12,
+    color: Colors.text,
+    fontFamily: "Inter_400Regular", fontSize: 14,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  kinSaveBtn: {
+    backgroundColor: Colors.accent,
+    borderRadius: 12, paddingVertical: 12,
+    alignItems: "center",
+  },
+  kinSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: Colors.primary },
+  kinEmpty: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.card,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  kinEmptyText: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textMuted, flex: 1, lineHeight: 19 },
+  kinRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.card,
+    borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  kinAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.accent + "22",
+    alignItems: "center", justifyContent: "center",
+  },
+  kinAvatarText: { fontFamily: "Inter_700Bold", fontSize: 16, color: Colors.accent },
+  kinInfo: { flex: 1 },
+  kinName: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  kinPhone: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
+  kinRemove: { padding: 6 },
+
+  // Leaderboard
+  leaderCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 20, padding: 16,
+    flexDirection: "row", alignItems: "center", gap: 14,
+    borderWidth: 1.5, borderColor: Colors.accent + "40",
+  },
+  leaderIcon: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
+  leaderInfo: { flex: 1, gap: 3 },
+  leaderTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
   leaderSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
 });
