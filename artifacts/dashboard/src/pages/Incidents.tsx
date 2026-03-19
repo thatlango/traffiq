@@ -333,11 +333,10 @@ export default function IncidentsPage() {
 
   const days = DATE_OPTIONS.find(o => o.value === dateFilter)?.days ?? 0;
 
-  const statsQ = useQuery({ queryKey: ["incident-stats"], queryFn: api.incidentStats, refetchInterval: 60_000 });
+  const statsQ = useQuery({ queryKey: ["incident-stats"], queryFn: api.incidentStats });
   const incQ   = useQuery({
     queryKey: ["incidents-page", typeFilter, days, page],
     queryFn: () => api.incidents({ limit: PAGE_SIZE, offset: page * PAGE_SIZE, type: typeFilter, days }),
-    refetchInterval: 30_000,
   });
 
   const rawIncidents = incQ.data?.incidents ?? [];
