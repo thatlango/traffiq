@@ -9,6 +9,7 @@ import React, {
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
+import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -47,10 +48,17 @@ function GoogleAuthHandler({
   onResponse: (token: string) => void;
   promptRef: React.MutableRefObject<(() => Promise<void>) | null>;
 }) {
+  // Use the app's own traffiq:// scheme for the redirect — no Replit or auth.expo.io involved.
+  // On Android/iOS native builds the reverse client-ID scheme is used automatically.
+  const redirectUri = AuthSession.makeRedirectUri({
+    scheme: "traffiq",
+    path: "auth",
+  });
+
   const [, response, promptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
-    expoClientId: GOOGLE_WEB_CLIENT_ID,
+    redirectUri,
   });
 
   useEffect(() => {

@@ -300,7 +300,7 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
       : "";
 
     const message = [
-      `RoadWatch Live Journey Update`,
+      `TraffIQ Live Journey Update`,
       ``,
       `I am currently travelling ${roadPart} ${speedPart}.`,
       loc ? `Live location: ${mapsLink}` : "",
@@ -308,11 +308,11 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
       `Journey started: ${new Date(currentJourney.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
       `Transport mode: ${currentJourney.mode.toUpperCase()}`,
       ``,
-      `Shared via RoadWatch — Crowdsourced Road Safety`,
+      `Shared via TraffIQ — Uganda Road Safety Intelligence`,
     ].filter(Boolean).join("\n");
 
     try {
-      await Share.share({ message, title: "RoadWatch Live Journey" });
+      await Share.share({ message, title: "TraffIQ Live Journey" });
       setSharingJourney(true);
       addAlert({ type: "congestion", message: `Journey shared${kinNames ? ` with ${kinNames}` : ""}.` });
     } catch {}

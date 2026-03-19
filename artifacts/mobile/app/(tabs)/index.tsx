@@ -40,7 +40,7 @@ export default function MapScreen() {
         <View style={styles.headerLeft}>
           <View style={styles.logoRow}>
             <Feather name="shield" size={20} color={Colors.accent} />
-            <Text style={styles.logoText}>RoadWatch</Text>
+            <Text style={styles.logoText}>TraffIQ</Text>
           </View>
           <Text style={styles.headerSubtitle}>Live Traffic Intelligence</Text>
         </View>
