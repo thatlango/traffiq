@@ -29,11 +29,23 @@ function getBadges(trips: number, score: number, overspeedCount: number) {
   ];
 }
 
+function timeAgo(ts: number) {
+  if (!ts) return "";
+  const diff = Math.floor((Date.now() - ts) / 60000);
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+  return `${Math.floor(diff / 1440)}d ago`;
+}
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
-  const { safetyScore, riskLevel, totalTrips, totalDistance, pastJourneys, nextOfKin, addNextOfKin, removeNextOfKin } = useJourney();
+  const {
+    safetyScore, riskLevel, totalTrips, totalDistance, pastJourneys,
+    nextOfKin, addNextOfKin, removeNextOfKin,
+    smartPlaces, frequentRoutes,
+  } = useJourney();
   const { user, signOut } = useAuth();
 
   const [showKinForm, setShowKinForm] = useState(false);
@@ -75,7 +87,7 @@ export default function ProfileScreen() {
       contentContainerStyle={[styles.scroll, { paddingTop: topInset + 12, paddingBottom: bottomInset + 100 }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* ── Hero card: avatar + score in one card ── */}
+      {/* ── Hero card ── */}
       <View style={styles.heroCard}>
         <View style={styles.heroLeft}>
           {user?.avatarUrl ? (
@@ -87,9 +99,7 @@ export default function ProfileScreen() {
           )}
           <View style={styles.heroInfo}>
             <Text style={styles.heroName} numberOfLines={1}>{user?.name ?? "TraffIQ User"}</Text>
-            {user?.email ? (
-              <Text style={styles.heroEmail} numberOfLines={1}>{user.email}</Text>
-            ) : null}
+            {user?.email ? <Text style={styles.heroEmail} numberOfLines={1}>{user.email}</Text> : null}
             <View style={styles.accountBadge}>
               {user?.isGuest ? (
                 <>
@@ -109,7 +119,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
-
         <View style={styles.heroRight}>
           <SafetyScoreRing score={safetyScore} size={110} showLabel />
           <Pressable onPress={confirmSignOut} style={styles.signOutBtn}>
@@ -122,10 +131,10 @@ export default function ProfileScreen() {
       {/* ── Stats row ── */}
       <View style={styles.statsRow}>
         {[
-          { value: totalTrips.toString(), label: "Trips", icon: "navigation", color: Colors.accent },
-          { value: totalDistance.toFixed(0), label: "km", icon: "map-pin", color: Colors.info },
-          { value: totalHours, label: "Hours", icon: "clock", color: Colors.success },
-          { value: totalOverspeed.toString(), label: "Overspeed", icon: "zap", color: Colors.warning },
+          { value: totalTrips.toString(), label: "Trips", color: Colors.accent },
+          { value: totalDistance.toFixed(0), label: "km", color: Colors.info },
+          { value: totalHours, label: "Hours", color: Colors.success },
+          { value: totalOverspeed.toString(), label: "Overspeed", color: Colors.warning },
         ].map((s, i, arr) => (
           <React.Fragment key={s.label}>
             <View style={styles.statItem}>
@@ -136,6 +145,68 @@ export default function ProfileScreen() {
           </React.Fragment>
         ))}
       </View>
+
+      {/* ── Smart Paths ── */}
+      {(smartPlaces.length > 0 || frequentRoutes.length > 0) && (
+        <View style={styles.section}>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Smart Paths</Text>
+            <View style={styles.aiPill}>
+              <Feather name="zap" size={10} color={Colors.accent} />
+              <Text style={styles.aiPillText}>AI Detected</Text>
+            </View>
+          </View>
+
+          {smartPlaces.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardSubtitle}>Frequently Visited</Text>
+              {smartPlaces.map(place => (
+                <View key={place.id} style={styles.smartPlaceRow}>
+                  <View style={[styles.smartPlaceIcon, { backgroundColor: place.color + "22" }]}>
+                    <Feather name={place.icon as any} size={16} color={place.color} />
+                  </View>
+                  <View style={styles.smartPlaceInfo}>
+                    <Text style={styles.smartPlaceLabel}>{place.label}</Text>
+                    <Text style={styles.smartPlaceCoords}>
+                      {place.latitude.toFixed(4)}, {place.longitude.toFixed(4)} · {place.visitCount}x visited
+                    </Text>
+                  </View>
+                  <Text style={styles.smartPlaceTime}>{timeAgo(place.lastVisited)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {frequentRoutes.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardSubtitle}>Frequent Routes</Text>
+              {frequentRoutes.map((route, i) => (
+                <View key={route.id} style={styles.routeRow}>
+                  <View style={styles.routeDots}>
+                    <View style={styles.routeDotStart} />
+                    <View style={styles.routeLine} />
+                    <View style={styles.routeDotEnd} />
+                  </View>
+                  <View style={styles.routeInfo}>
+                    <Text style={styles.routeLabel}>Route {i + 1}</Text>
+                    <Text style={styles.routeMeta}>
+                      {route.count}x · ~{route.avgDurationMin}min · {route.mode.toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.routeTime}>{timeAgo(route.lastUsed)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {smartPlaces.length === 0 && frequentRoutes.length === 0 && (
+            <View style={styles.smartEmpty}>
+              <Feather name="trending-up" size={20} color={Colors.textMuted} />
+              <Text style={styles.smartEmptyText}>Complete 3+ journeys to unlock smart path detection</Text>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* ── Safety breakdown ── */}
       <View style={styles.section}>
@@ -186,10 +257,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Next of Kin</Text>
-          <Pressable
-            onPress={() => setShowKinForm(v => !v)}
-            style={styles.addBtn}
-          >
+          <Pressable onPress={() => setShowKinForm(v => !v)} style={styles.addBtn}>
             <Feather name={showKinForm ? "x" : "plus"} size={14} color={Colors.accent} />
             <Text style={styles.addBtnText}>{showKinForm ? "Cancel" : "Add"}</Text>
           </Pressable>
@@ -197,26 +265,9 @@ export default function ProfileScreen() {
 
         {showKinForm && (
           <View style={styles.kinForm}>
-            <TextInput
-              style={styles.kinInput}
-              placeholder="Name"
-              placeholderTextColor={Colors.textMuted}
-              value={kinName}
-              onChangeText={setKinName}
-            />
-            <TextInput
-              style={styles.kinInput}
-              placeholder="Phone number"
-              placeholderTextColor={Colors.textMuted}
-              value={kinPhone}
-              onChangeText={setKinPhone}
-              keyboardType="phone-pad"
-            />
-            <Pressable
-              onPress={handleAddKin}
-              disabled={!kinName.trim() || !kinPhone.trim()}
-              style={[styles.kinSaveBtn, (!kinName.trim() || !kinPhone.trim()) && { opacity: 0.5 }]}
-            >
+            <TextInput style={styles.kinInput} placeholder="Name" placeholderTextColor={Colors.textMuted} value={kinName} onChangeText={setKinName} />
+            <TextInput style={styles.kinInput} placeholder="Phone number" placeholderTextColor={Colors.textMuted} value={kinPhone} onChangeText={setKinPhone} keyboardType="phone-pad" />
+            <Pressable onPress={handleAddKin} disabled={!kinName.trim() || !kinPhone.trim()} style={[styles.kinSaveBtn, (!kinName.trim() || !kinPhone.trim()) && { opacity: 0.5 }]}>
               <Text style={styles.kinSaveBtnText}>Save Contact</Text>
             </Pressable>
           </View>
@@ -237,14 +288,10 @@ export default function ProfileScreen() {
                 <Text style={styles.kinName}>{k.name}</Text>
                 <Text style={styles.kinPhone}>{k.phone}</Text>
               </View>
-              <Pressable
-                onPress={() => Alert.alert("Remove", `Remove ${k.name}?`, [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Remove", style: "destructive", onPress: () => removeNextOfKin(k.id) },
-                ])}
-                hitSlop={10}
-                style={styles.kinRemove}
-              >
+              <Pressable onPress={() => Alert.alert("Remove", `Remove ${k.name}?`, [
+                { text: "Cancel", style: "cancel" },
+                { text: "Remove", style: "destructive", onPress: () => removeNextOfKin(k.id) },
+              ])} hitSlop={10} style={styles.kinRemove}>
                 <Feather name="trash-2" size={16} color={Colors.textMuted} />
               </Pressable>
             </View>
@@ -252,7 +299,7 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      {/* ── Leaderboard teaser ── */}
+      {/* ── Leaderboard ── */}
       <Pressable style={styles.leaderCard}>
         <View style={[styles.leaderIcon, { backgroundColor: Colors.accent + "20" }]}>
           <MaterialCommunityIcons name="trophy" size={22} color={Colors.accent} />
@@ -270,18 +317,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
   scroll: { paddingHorizontal: 16, gap: 20 },
-
-  // Hero
   heroCard: {
     backgroundColor: Colors.card,
-    borderRadius: 24,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 12,
+    borderRadius: 24, padding: 18,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    borderWidth: 1, borderColor: Colors.border, gap: 12,
   },
   heroLeft: { flexDirection: "row", alignItems: "flex-start", gap: 14, flex: 1 },
   avatar: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: Colors.accent + "44" },
@@ -295,18 +335,15 @@ const styles = StyleSheet.create({
   heroName: { fontFamily: "Inter_700Bold", fontSize: 17, color: Colors.text },
   heroEmail: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
   accountBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    alignSelf: "flex-start",
+    flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "flex-start",
     backgroundColor: Colors.primary,
     borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3,
     borderWidth: 1, borderColor: Colors.border,
   },
   accountBadgeText: { fontFamily: "Inter_500Medium", fontSize: 10 },
   riskChip: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    alignSelf: "flex-start",
-    borderRadius: 20, borderWidth: 1.5,
-    paddingHorizontal: 8, paddingVertical: 4,
+    flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start",
+    borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 8, paddingVertical: 4,
   },
   riskDot: { width: 6, height: 6, borderRadius: 3 },
   riskText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
@@ -317,23 +354,16 @@ const styles = StyleSheet.create({
     borderRadius: 12, borderWidth: 1, borderColor: Colors.border,
   },
   signOutText: { fontFamily: "Inter_400Regular", fontSize: 12, color: Colors.textSecondary },
-
-  // Stats row
   statsRow: {
     backgroundColor: Colors.card,
-    borderRadius: 20,
-    flexDirection: "row",
-    paddingVertical: 18,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 20, flexDirection: "row",
+    paddingVertical: 18, paddingHorizontal: 8,
+    borderWidth: 1, borderColor: Colors.border,
   },
   statItem: { flex: 1, alignItems: "center", gap: 3 },
   statValue: { fontFamily: "Inter_700Bold", fontSize: 22 },
   statLabel: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textSecondary },
   statDivider: { width: 1, backgroundColor: Colors.border, marginVertical: 6 },
-
-  // Section
   section: { gap: 12 },
   sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   sectionTitle: {
@@ -341,7 +371,47 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary, textTransform: "uppercase", letterSpacing: 1,
   },
   badgeCount: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.accent },
-  card: { backgroundColor: Colors.card, borderRadius: 20, padding: 16, gap: 16, borderWidth: 1, borderColor: Colors.border },
+  card: {
+    backgroundColor: Colors.card, borderRadius: 20,
+    padding: 16, gap: 14,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  cardSubtitle: {
+    fontFamily: "Inter_600SemiBold", fontSize: 12,
+    color: Colors.textMuted, textTransform: "uppercase", letterSpacing: 0.8,
+    marginBottom: -4,
+  },
+
+  // Smart paths
+  aiPill: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: Colors.accent + "18",
+    borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4,
+    borderWidth: 1, borderColor: Colors.accent + "44",
+  },
+  aiPillText: { fontFamily: "Inter_600SemiBold", fontSize: 10, color: Colors.accent },
+  smartPlaceRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  smartPlaceIcon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  smartPlaceInfo: { flex: 1 },
+  smartPlaceLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  smartPlaceCoords: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+  smartPlaceTime: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textMuted },
+  routeRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  routeDots: { alignItems: "center", gap: 2 },
+  routeDotStart: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.success },
+  routeLine: { width: 2, height: 16, backgroundColor: Colors.border },
+  routeDotEnd: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.accent },
+  routeInfo: { flex: 1 },
+  routeLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, color: Colors.text },
+  routeMeta: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+  routeTime: { fontFamily: "Inter_400Regular", fontSize: 11, color: Colors.textMuted },
+  smartEmpty: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: Colors.card,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  smartEmptyText: { fontFamily: "Inter_400Regular", fontSize: 13, color: Colors.textMuted, flex: 1, lineHeight: 19 },
 
   // Safety breakdown
   breakdownRow: { gap: 6 },
@@ -376,17 +446,11 @@ const styles = StyleSheet.create({
   addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: Colors.accent },
   kinForm: { backgroundColor: Colors.card, borderRadius: 16, padding: 14, gap: 10, borderWidth: 1, borderColor: Colors.border },
   kinInput: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12, padding: 12,
-    color: Colors.text,
-    fontFamily: "Inter_400Regular", fontSize: 14,
+    backgroundColor: Colors.primary, borderRadius: 12, padding: 12,
+    color: Colors.text, fontFamily: "Inter_400Regular", fontSize: 14,
     borderWidth: 1, borderColor: Colors.border,
   },
-  kinSaveBtn: {
-    backgroundColor: Colors.accent,
-    borderRadius: 12, paddingVertical: 12,
-    alignItems: "center",
-  },
+  kinSaveBtn: { backgroundColor: Colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: "center" },
   kinSaveBtnText: { fontFamily: "Inter_700Bold", fontSize: 15, color: Colors.primary },
   kinEmpty: {
     flexDirection: "row", alignItems: "center", gap: 12,
