@@ -1,7 +1,6 @@
 [build]
-  base    = "artifacts/dashboard"
-  command = "npm install -g pnpm && pnpm install && pnpm run build"
-  publish = "dist/public"
+  command = "npm install -g pnpm && pnpm install && pnpm --filter @workspace/dashboard run build"
+  publish = "artifacts/dashboard/dist/public"
 
 [build.environment]
   NODE_VERSION          = "20"
