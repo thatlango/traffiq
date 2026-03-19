@@ -43,24 +43,35 @@ function ClassicTabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : Colors.primary,
-          borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: Colors.border,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
           elevation: 0,
-          ...(isWeb ? { height: 84 } : {}),
+          ...(isWeb ? { height: 84 } : { height: 80 }),
+        },
+        tabBarLabelStyle: {
+          fontFamily: "Inter_500Medium",
+          fontSize: 11,
+          letterSpacing: 0.2,
+          marginBottom: isWeb ? 6 : 4,
+        },
+        tabBarItemStyle: {
+          paddingTop: 8,
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
-              intensity={80}
+              intensity={90}
               tint="dark"
               style={StyleSheet.absoluteFill}
             />
-          ) : isWeb ? (
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: Colors.primary }]}
-            />
-          ) : null,
+          ) : (
+            <View style={StyleSheet.absoluteFill}>
+              {/* Background fill */}
+              <View style={[StyleSheet.absoluteFill, styles.tabBarBg]} />
+              {/* Top accent line */}
+              <View style={styles.tabBarTopLine} />
+            </View>
+          ),
       }}
     >
       <Tabs.Screen
@@ -121,3 +132,18 @@ export default function TabLayout() {
   }
   return <ClassicTabLayout />;
 }
+
+const styles = StyleSheet.create({
+  tabBarBg: {
+    backgroundColor: "rgba(8,18,34,0.97)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
+  },
+  tabBarTopLine: {
+    position: "absolute",
+    top: 0, left: 40, right: 40,
+    height: 1,
+    backgroundColor: "rgba(245,158,11,0.18)",
+    borderRadius: 1,
+  },
+});

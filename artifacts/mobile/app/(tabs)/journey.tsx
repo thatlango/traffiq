@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { useJourney, TransportMode } from "@/context/JourneyContext";
@@ -285,16 +286,26 @@ export default function JourneyScreen() {
           <Pressable
             onPress={handleStartStop}
             disabled={loading}
-            style={[styles.startBtn, isTracking && styles.stopBtn, loading && { opacity: 0.7 }]}
+            style={[styles.fabWrap, loading && { opacity: 0.7 }]}
           >
-            <Feather
-              name={isTracking ? "square" : "play"}
-              size={26}
-              color={isTracking ? Colors.danger : Colors.primary}
-            />
-            <Text style={[styles.startBtnText, isTracking && { color: Colors.danger }]}>
-              {loading ? "…" : isTracking ? "Stop Journey" : "Start Journey"}
-            </Text>
+            {isTracking ? (
+              <View style={styles.stopBtn}>
+                <Feather name="square" size={24} color={Colors.danger} />
+                <Text style={styles.stopBtnText}>Stop Journey</Text>
+              </View>
+            ) : (
+              <LinearGradient
+                colors={[Colors.accentLight, Colors.accent, Colors.accentDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.startBtn}
+              >
+                <Feather name="play" size={24} color={Colors.primary} />
+                <Text style={styles.startBtnText}>
+                  {loading ? "Starting…" : "Start Journey"}
+                </Text>
+              </LinearGradient>
+            )}
           </Pressable>
         </Animated.View>
       </View>
@@ -422,15 +433,25 @@ const styles = StyleSheet.create({
 
   // FAB
   fab: { position: "absolute", left: 20, right: 20, alignItems: "center" },
-  startBtn: {
-    backgroundColor: Colors.accent,
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingVertical: 18, paddingHorizontal: 48,
-    borderRadius: 30,
+  fabWrap: {
+    borderRadius: 32,
     shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5, shadowRadius: 20, elevation: 12,
+    overflow: "hidden",
   },
-  stopBtn: { backgroundColor: Colors.danger + "20", borderWidth: 2, borderColor: Colors.danger, shadowOpacity: 0 },
+  startBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 19, paddingHorizontal: 52,
+    borderRadius: 32,
+  },
   startBtnText: { fontFamily: "Inter_700Bold", fontSize: 18, color: Colors.primary },
+  stopBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    paddingVertical: 19, paddingHorizontal: 52,
+    borderRadius: 32,
+    backgroundColor: Colors.danger + "18",
+    borderWidth: 2, borderColor: Colors.danger,
+  },
+  stopBtnText: { fontFamily: "Inter_700Bold", fontSize: 18, color: Colors.danger },
 });
