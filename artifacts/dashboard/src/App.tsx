@@ -168,7 +168,7 @@ function Shell({ session, onSignOut }: { session: AdminSession; onSignOut: () =>
           <div className="ml-auto"><LivePulse /></div>
         </header>
 
-        <main className={`flex-1 ${page === "map" ? "overflow-hidden flex flex-col" : "overflow-y-auto"}`}>
+        <main className={`flex-1 ${page === "map" || page === "incidents" ? "overflow-hidden flex flex-col" : "overflow-y-auto"}`}>
           {page === "overview" && <OverviewPage onNavigate={setPage} />}
           {page === "users" && <UsersPage />}
           {page === "incidents" && <IncidentsPage />}
