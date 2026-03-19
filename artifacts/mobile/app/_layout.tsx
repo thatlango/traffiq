@@ -5,12 +5,10 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -18,8 +16,6 @@ import { JourneyProvider } from "@/context/JourneyContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
-
-const queryClient = new QueryClient();
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -58,9 +54,7 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) return null;
@@ -68,19 +62,15 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <JourneyProvider>
-              <GestureHandlerRootView>
-                <KeyboardProvider>
-                  <AuthGuard>
-                    <RootLayoutNav />
-                  </AuthGuard>
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </JourneyProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <AuthProvider>
+          <JourneyProvider>
+            <GestureHandlerRootView>
+              <AuthGuard>
+                <RootLayoutNav />
+              </AuthGuard>
+            </GestureHandlerRootView>
+          </JourneyProvider>
+        </AuthProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

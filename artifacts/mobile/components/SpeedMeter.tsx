@@ -62,8 +62,8 @@ export default function SpeedMeter({ speed, limit, size = 200 }: Props) {
   useEffect(() => {
     Animated.spring(progressAnim, {
       toValue: targetProgress,
-      tension: 60,
-      friction: 10,
+      tension: 280,   // stiff = follows speed without lag
+      friction: 22,   // well-damped = no overshoot
       useNativeDriver: false,
     }).start();
   }, [targetProgress]);
