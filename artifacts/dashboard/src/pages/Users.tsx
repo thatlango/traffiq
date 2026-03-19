@@ -154,7 +154,7 @@ export default function UsersPage() {
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["users", page],
     queryFn: () => api.users(PAGE_SIZE, page * PAGE_SIZE),
-    refetchInterval: 30_000,
+    refetchInterval: 5_000,
   });
 
   const users = data?.users ?? [];
