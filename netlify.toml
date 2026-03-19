@@ -1,13 +1,21 @@
 [build]
   base    = "artifacts/dashboard"
   command = "npm install -g pnpm && pnpm install && pnpm run build"
-  publish = "dist"
+  publish = "dist/public"
 
 [build.environment]
   NODE_VERSION = "20"
   BASE_PATH    = "/"
 
-# SPA fallback — all routes serve index.html so React Router can handle them
+# Proxy /api/* to the TraffIQ API server on Replit
+# (Netlify forwards the request server-side — no CORS issues)
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://bad5664e-5c35-4d18-9499-0c529631ac9d-00-2rc9l5o8ld7mu.spock.replit.dev/api-server/api/:splat"
+  status = 200
+  force  = true
+
+# SPA fallback — all other routes serve index.html
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
