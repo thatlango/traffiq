@@ -1,11 +1,8 @@
+# No build step — index.html uses Tailwind CDN, everything is self-contained.
+# Netlify just serves this folder directly.
 [build]
-  command = "pnpm install --filter \"@workspace/landing...\" --no-frozen-lockfile && pnpm --filter @workspace/landing run build"
-  publish = "artifacts/landing/dist"
+  publish = "artifacts/landing"
   base    = "."
-
-[build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "10"
 
 [[headers]]
   for = "/*"

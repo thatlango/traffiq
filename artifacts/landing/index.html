@@ -9,349 +9,350 @@
   <meta property="og:description" content="Every road user becomes a live traffic sensor. Download the app. View the dashboard." />
   <meta property="og:type" content="website" />
   <title>TraffIQ – East Africa's Traffic Intelligence Platform</title>
-  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+  <!-- Favicon inline -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d0b3c'/><path d='M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z' fill='%2376e000'/><rect x='35' y='62' width='30' height='11' rx='3' fill='%2376e000'/></svg>" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/src/style.css" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand:      '#1d0b3c',
+            'brand-mid':'#2d1850',
+            lime:       '#76e000',
+            'lime-dark':'#5ab300',
+            'lime-soft':'#edffd0',
+            'purple-soft':'#f0ebff',
+          },
+          fontFamily: { sans: ['"Open Sans"', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: "Open Sans", sans-serif; overflow-x: hidden; }
+
+    /* Nav scroll effect */
+    #nav.scrolled { box-shadow: 0 2px 20px rgba(29,11,60,0.15); }
+
+    /* Buttons */
+    .btn-primary  { display:inline-flex;align-items:center;gap:8px;background:#76e000;color:#1d0b3c;font-weight:800;border-radius:9999px;padding:14px 28px;font-size:15px;text-decoration:none;transition:background .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(118,224,0,.3); }
+    .btn-primary:hover  { background:#5ab300;transform:translateY(-1px);box-shadow:0 6px 28px rgba(118,224,0,.4); }
+    .btn-purple   { display:inline-flex;align-items:center;gap:8px;background:#1d0b3c;color:#fff;font-weight:800;border-radius:9999px;padding:14px 28px;font-size:15px;text-decoration:none;transition:background .2s,transform .15s; }
+    .btn-purple:hover   { background:#2d1850;transform:translateY(-1px); }
+    .btn-outline  { display:inline-flex;align-items:center;gap:8px;border:2px solid #1d0b3c;color:#1d0b3c;font-weight:700;border-radius:9999px;padding:12px 26px;font-size:15px;text-decoration:none;transition:all .2s; }
+    .btn-outline:hover  { background:#1d0b3c;color:#fff; }
+    .btn-sm       { padding:10px 20px!important;font-size:13px!important; }
+
+    /* Store buttons */
+    .store-btn       { display:inline-flex;align-items:center;gap:10px;background:#1d0b3c;color:#fff;border-radius:12px;padding:10px 18px;text-decoration:none;transition:background .2s,transform .15s; }
+    .store-btn:hover { background:#2d1850;transform:translateY(-1px); }
+    .store-btn-light { display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:12px;padding:10px 18px;text-decoration:none;transition:background .2s; }
+    .store-btn-light:hover { background:rgba(255,255,255,.2); }
+
+    /* Cards */
+    .feature-card { background:#fff;border-radius:20px;padding:28px 24px;box-shadow:0 2px 24px rgba(29,11,60,.07);border:1px solid rgba(29,11,60,.06);transition:transform .2s,box-shadow .2s; }
+    .feature-card:hover { transform:translateY(-4px);box-shadow:0 8px 40px rgba(29,11,60,.12); }
+    .icon-circle  { width:56px;height:56px;border-radius:50%;background:#edffd0;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px; }
+
+    /* Phone */
+    .phone-frame  { width:240px;border-radius:36px;background:#1d0b3c;padding:12px;box-shadow:0 24px 60px rgba(29,11,60,.25),0 0 0 1px rgba(29,11,60,.1);position:relative; }
+    .phone-notch  { width:80px;height:22px;border-radius:0 0 14px 14px;background:#1d0b3c;margin:0 auto 10px; }
+    .phone-screen { background:#f8f5ff;border-radius:26px;overflow:hidden; }
+
+    /* Stat pill */
+    .stat-pill { display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:50px;padding:8px 16px;box-shadow:0 4px 20px rgba(29,11,60,.12);font-size:13px;font-weight:700;color:#1d0b3c; }
+
+    /* Live badge */
+    .live-badge { display:inline-flex;align-items:center;gap:6px;background:rgba(118,224,0,.12);border:1px solid rgba(118,224,0,.3);border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:#5ab300; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
+    .pulse-dot { animation:pulse 1.4s ease-in-out infinite; }
+
+    /* Section label */
+    .section-label { font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5ab300;margin-bottom:10px; }
+    .section-title { font-size:clamp(26px,4vw,42px);font-weight:800;line-height:1.15;color:#1d0b3c; }
+
+    /* Check list */
+    .check-list li { display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;font-size:15px;color:#64607a; }
+    .check-list li::before { content:"✓";display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#76e000;color:#1d0b3c;font-size:12px;font-weight:900;flex-shrink:0;margin-top:1px; }
+
+    /* Map container */
+    .map-container { background:#dce8f0;border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(29,11,60,.12); }
+
+    /* CTA banner */
+    .cta-banner { background:linear-gradient(135deg,#1d0b3c 0%,#2d0f5c 100%);border-radius:28px;padding:56px 48px;overflow:hidden;position:relative; }
+    .cta-banner::before { content:"";position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(118,224,0,.08); }
+
+    /* Form */
+    .input-row { display:flex;border:1.5px solid #d0c8e8;border-radius:12px;overflow:hidden;background:#fff; }
+    .input-row input { flex:1;padding:13px 16px;border:none;outline:none;font-size:14px;font-family:inherit;color:#1d0b3c;background:transparent; }
+    .input-row button { background:#1d0b3c;color:#fff;border:none;cursor:pointer;padding:0 22px;font-weight:700;font-size:14px;font-family:inherit;transition:background .2s; }
+    .input-row button:hover { background:#2d1850; }
+
+    /* Scroll reveal */
+    .reveal,.reveal-left,.reveal-right { opacity:0;transition:opacity .55s ease,transform .55s ease; }
+    .reveal       { transform:translateY(28px); }
+    .reveal-left  { transform:translateX(-32px); }
+    .reveal-right { transform:translateX(32px); }
+    .reveal.in,.reveal-left.in,.reveal-right.in { opacity:1;transform:none; }
+
+    @media (max-width:768px) {
+      .cta-banner { padding:36px 24px; }
+      .phone-frame { width:200px; }
+    }
+  </style>
 </head>
-<body>
+<body class="bg-white text-brand font-sans">
 
-<!-- ══════════════════════════════════════════════════════
-     NAV
-═══════════════════════════════════════════════════════ -->
-<header id="nav" class="sticky top-0 z-50 bg-white border-b border-[#ede8f8]">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<!-- ── Nav ─────────────────────────────────────────────── -->
+<header id="nav" class="sticky top-0 z-50 bg-white border-b border-purple-soft transition-shadow duration-300">
+  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
-    <a href="#" class="flex items-center gap-2 select-none">
-      <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <a href="#" class="flex items-center gap-2.5 select-none">
+      <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
         <rect width="100" height="100" rx="20" fill="#1d0b3c"/>
         <path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/>
         <rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/>
         <rect x="46" y="10" width="8" height="18" rx="2" fill="#1d0b3c"/>
       </svg>
       <span class="text-xl font-extrabold tracking-tight">
-        <span style="color:#1d0b3c">TRAFF</span><span style="color:#76e000">IQ</span>
+        <span class="text-brand">TRAFF</span><span class="text-lime">IQ</span>
       </span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-[#64607a]">
-      <a href="#features"     class="hover:text-[#1d0b3c] transition-colors">Professionals</a>
-      <a href="#facilities"   class="hover:text-[#1d0b3c] transition-colors">Facilities</a>
-      <a href="#how-it-works" class="hover:text-[#1d0b3c] transition-colors">How It Works</a>
-      <a href="#contact"      class="hover:text-[#1d0b3c] transition-colors">Contact</a>
+    <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-500">
+      <a href="#features"     class="hover:text-brand transition-colors">Professionals</a>
+      <a href="#facilities"   class="hover:text-brand transition-colors">Facilities</a>
+      <a href="#coverage"     class="hover:text-brand transition-colors">Coverage</a>
+      <a href="#contact"      class="hover:text-brand transition-colors">Contact</a>
     </nav>
 
     <div class="hidden md:flex items-center gap-3">
       <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener"
-         class="text-sm font-bold text-[#1d0b3c] hover:text-[#5ab300] transition-colors px-2">Login</a>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple !py-2.5 !px-5 !text-sm">
+         class="text-sm font-bold text-brand hover:text-lime-dark transition-colors px-2">Login</a>
+      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple btn-sm">
         Get Started
       </a>
     </div>
 
-    <button id="menu-btn" class="md:hidden p-2 text-[#1d0b3c]" aria-label="Menu">
+    <button id="menu-btn" class="md:hidden p-2 text-brand" aria-label="Menu">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
       </svg>
     </button>
   </div>
 
-  <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-[#ede8f8] px-6 py-4 space-y-3">
-    <a href="#features"     class="block py-2 font-semibold text-[#64607a]">Professionals</a>
-    <a href="#facilities"   class="block py-2 font-semibold text-[#64607a]">Facilities</a>
-    <a href="#how-it-works" class="block py-2 font-semibold text-[#64607a]">How It Works</a>
-    <a href="#contact"      class="block py-2 font-semibold text-[#64607a]">Contact</a>
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-purple-soft px-6 py-4 space-y-3">
+    <a href="#features"   class="block py-2 font-semibold text-gray-500">Professionals</a>
+    <a href="#facilities" class="block py-2 font-semibold text-gray-500">Facilities</a>
+    <a href="#coverage"   class="block py-2 font-semibold text-gray-500">Coverage</a>
+    <a href="#contact"    class="block py-2 font-semibold text-gray-500">Contact</a>
     <div class="pt-2 flex gap-3">
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-outline !py-2.5 !px-5 !text-sm flex-1 justify-center">Login</a>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple !py-2.5 !px-5 !text-sm flex-1 justify-center">Get Started</a>
+      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-outline btn-sm flex-1 justify-center">Login</a>
+      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple btn-sm flex-1 justify-center">Get Started</a>
     </div>
   </div>
 </header>
 
 
-<!-- ══════════════════════════════════════════════════════
-     HERO
-═══════════════════════════════════════════════════════ -->
-<section class="relative overflow-hidden" style="background: linear-gradient(160deg,#f0ebff 0%,#edffd0 100%)">
-
-  <!-- Decorative blobs -->
+<!-- ── Hero ─────────────────────────────────────────────── -->
+<section class="relative overflow-hidden" style="background:linear-gradient(160deg,#f0ebff 0%,#edffd0 100%)">
   <div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-40 pointer-events-none"
-       style="background:radial-gradient(circle,rgba(118,224,0,0.25),transparent 70%);transform:translate(30%,-30%)"></div>
+       style="background:radial-gradient(circle,rgba(118,224,0,.25),transparent 70%);transform:translate(30%,-30%)"></div>
   <div class="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-30 pointer-events-none"
-       style="background:radial-gradient(circle,rgba(29,11,60,0.15),transparent 70%);transform:translate(-30%,30%)"></div>
+       style="background:radial-gradient(circle,rgba(29,11,60,.15),transparent 70%);transform:translate(-30%,30%)"></div>
 
-  <div class="max-w-7xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center relative z-10">
-
-    <!-- Left copy -->
+  <div class="max-w-6xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center relative z-10">
     <div class="reveal-left">
       <div class="live-badge mb-6">
-        <span class="pulse-dot w-2 h-2 rounded-full" style="background:#5ab300"></span>
+        <span class="pulse-dot w-2 h-2 rounded-full bg-lime-dark"></span>
         5,000+ Road users active in East Africa
       </div>
-
-      <h1 class="text-5xl md:text-6xl font-extrabold leading-[1.08] mb-5" style="color:#1d0b3c">
-        See open roads in<br>
-        real time and<br>
-        <span style="color:#76e000">stay safe!</span>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-5 text-brand">
+        See open roads in<br>real time and<br>
+        <span class="text-lime">stay safe!</span>
       </h1>
-
-      <p class="text-[#64607a] text-lg mb-8 leading-relaxed max-w-md">
-        that keep you informed, then act fast — report incidents and get paid-for-safety at the end of your journey!
+      <p class="text-gray-500 text-lg mb-8 leading-relaxed max-w-md">
+        Stay informed on your route, report incidents in one tap, and earn safety rewards at the end of every journey.
       </p>
-
       <div class="flex flex-wrap gap-3 mb-8">
         <a href="#" class="store-btn">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <div>
-            <div style="font-size:10px;opacity:.75">Download on the</div>
-            <div style="font-size:14px;font-weight:800">App Store</div>
-          </div>
+          <div><div style="font-size:10px;opacity:.75">Download on the</div><div style="font-size:14px;font-weight:800">App Store</div></div>
         </a>
         <a href="#" class="store-btn">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-          <div>
-            <div style="font-size:10px;opacity:.75">GET IT ON</div>
-            <div style="font-size:14px;font-weight:800">Google Play</div>
-          </div>
+          <div><div style="font-size:10px;opacity:.75">GET IT ON</div><div style="font-size:14px;font-weight:800">Google Play</div></div>
         </a>
       </div>
-
-      <!-- Floating stats -->
       <div class="flex flex-wrap gap-3">
-        <div class="stat-pill">
-          <svg class="w-4 h-4 text-[#76e000]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-          4.8 App Rating
-        </div>
-        <div class="stat-pill">
-          <span style="color:#76e000">✓</span> Free to use
-        </div>
-        <div class="stat-pill">
-          <span style="color:#76e000">📍</span> Kampala · Nairobi · Dar es Salaam
-        </div>
+        <div class="stat-pill"><span class="text-lime">★</span> 4.8 App Rating</div>
+        <div class="stat-pill"><span class="text-lime">✓</span> Free to use</div>
+        <div class="stat-pill"><span>📍</span> Kampala · Nairobi · Dar</div>
       </div>
     </div>
 
-    <!-- Right: phone mockup + floating cards -->
+    <!-- Phone mockup -->
     <div class="flex justify-center lg:justify-end relative reveal-right">
-      <!-- Floating card: speed alert -->
-      <div class="absolute top-4 -left-4 z-20 bg-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 reveal" style="transition-delay:.2s">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background:#fff0f0">⚠️</div>
-        <div>
-          <div class="text-xs text-[#64607a]">Speed alert</div>
-          <div class="text-sm font-bold text-[#1d0b3c]">Rider at 67 km/h</div>
+      <div class="absolute top-4 -left-4 z-20 bg-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-red-50">⚠️</div>
+        <div><div class="text-xs text-gray-400">Speed alert</div><div class="text-sm font-bold text-brand">Rider at 67 km/h</div></div>
+      </div>
+      <div class="absolute bottom-8 -left-6 z-20 bg-white rounded-2xl shadow-xl px-4 py-3">
+        <div class="text-xs text-gray-400 mb-1">Safety Score</div>
+        <div class="flex items-center gap-2"><div class="text-2xl font-extrabold text-lime">87</div><div class="text-xs text-gray-400">Safe Driver 🏆</div></div>
+        <div class="mt-1.5 h-1.5 rounded-full bg-lime-soft w-32 overflow-hidden">
+          <div class="h-full rounded-full bg-lime" style="width:87%"></div>
         </div>
       </div>
-
-      <!-- Floating card: safety score -->
-      <div class="absolute bottom-8 -left-6 z-20 bg-white rounded-2xl shadow-xl px-4 py-3 reveal" style="transition-delay:.35s">
-        <div class="text-xs text-[#64607a] mb-1">Safety Score</div>
-        <div class="flex items-center gap-2">
-          <div class="text-2xl font-extrabold" style="color:#76e000">87</div>
-          <div class="text-xs text-[#64607a]">Safe Driver 🏆</div>
-        </div>
-        <div class="mt-1.5 h-1.5 rounded-full bg-[#e8f4e0] w-32 overflow-hidden">
-          <div class="h-full rounded-full" style="width:87%;background:#76e000"></div>
-        </div>
-      </div>
-
-      <!-- Phone -->
       <div class="phone-frame">
         <div class="phone-notch"></div>
         <div class="phone-screen">
-          <!-- App header -->
-          <div class="px-4 py-3 flex items-center justify-between" style="background:#1d0b3c">
-            <div class="flex items-center gap-2">
-              <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="#1d0b3c"/><path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/><rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/></svg>
-              <span class="text-white text-xs font-bold">TRAFFIQ</span>
-            </div>
+          <div class="px-4 py-3 flex items-center justify-between bg-brand">
+            <span class="text-white text-xs font-bold">TRAFFIQ</span>
             <div class="live-badge" style="font-size:10px;padding:3px 10px">
-              <span class="pulse-dot w-1.5 h-1.5 rounded-full" style="background:#5ab300"></span> LIVE
+              <span class="pulse-dot w-1.5 h-1.5 rounded-full bg-lime-dark"></span> LIVE
             </div>
           </div>
-          <!-- Journey screen -->
           <div class="px-4 py-3">
-            <div class="text-xs text-[#64607a] mb-1">Active Journey</div>
-            <div class="text-[#1d0b3c] font-bold text-sm mb-3">Kampala CBD → Entebbe Rd</div>
-            <!-- Speed gauge -->
-            <div class="rounded-xl p-3 mb-3 text-center" style="background:#f0ebff">
-              <div class="text-3xl font-extrabold" style="color:#1d0b3c">42</div>
-              <div class="text-xs text-[#64607a]">km/h · Speed limit: 50</div>
-              <div class="mt-2 h-2 rounded-full bg-[#ddd8f0]">
-                <div class="h-full rounded-full" style="width:84%;background:linear-gradient(90deg,#76e000,#5ab300)"></div>
+            <div class="text-xs text-gray-400 mb-1">Active Journey</div>
+            <div class="text-brand font-bold text-sm mb-3">Kampala CBD → Entebbe Rd</div>
+            <div class="rounded-xl p-3 mb-3 text-center bg-purple-soft">
+              <div class="text-3xl font-extrabold text-brand">42</div>
+              <div class="text-xs text-gray-400">km/h · Speed limit: 50</div>
+              <div class="mt-2 h-2 rounded-full bg-purple-200">
+                <div class="h-full rounded-full bg-lime" style="width:84%"></div>
               </div>
             </div>
-            <!-- Mini map -->
-            <div class="rounded-xl overflow-hidden mb-3" style="height:110px;background:#dce8f0;position:relative">
+            <div class="rounded-xl overflow-hidden mb-3" style="height:110px">
               <svg viewBox="0 0 240 110" class="w-full h-full">
                 <rect width="240" height="110" fill="#dce8f0"/>
-                <line x1="20" y1="55" x2="220" y2="55" stroke="#b8cfe0" stroke-width="14"/>
-                <line x1="120" y1="5" x2="120" y2="105" stroke="#b8cfe0" stroke-width="10"/>
+                <line x1="0" y1="55" x2="240" y2="55" stroke="#b8cfe0" stroke-width="14"/>
+                <line x1="120" y1="0" x2="120" y2="110" stroke="#b8cfe0" stroke-width="10"/>
                 <polyline points="20,75 60,55 100,45 140,48 180,42 220,40" stroke="#76e000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
                 <circle cx="180" cy="42" r="6" fill="#1d0b3c"/>
-                <circle cx="180" cy="42" r="9" fill="none" stroke="#1d0b3c" stroke-width="1.5" opacity=".4"/>
                 <circle cx="60" cy="55" r="5" fill="#f59e0b"/>
               </svg>
             </div>
-            <!-- Status row -->
             <div class="grid grid-cols-3 gap-2 text-center text-xs">
-              <div class="rounded-lg py-2" style="background:#edffd0">
-                <div class="font-bold text-sm" style="color:#1d0b3c">3.2</div>
-                <div class="text-[#64607a]">km left</div>
-              </div>
-              <div class="rounded-lg py-2" style="background:#edffd0">
-                <div class="font-bold text-sm" style="color:#1d0b3c">6 min</div>
-                <div class="text-[#64607a]">ETA</div>
-              </div>
-              <div class="rounded-lg py-2" style="background:#edffd0">
-                <div class="font-bold text-sm" style="color:#76e000">Safe</div>
-                <div class="text-[#64607a]">Status</div>
-              </div>
+              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-brand">3.2</div><div class="text-gray-400">km left</div></div>
+              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-brand">6 min</div><div class="text-gray-400">ETA</div></div>
+              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-lime">Safe</div><div class="text-gray-400">Status</div></div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     3 SIMPLE STEPS
-═══════════════════════════════════════════════════════ -->
+<!-- ── 3 Steps ───────────────────────────────────────────── -->
 <section id="features" class="py-20 bg-white">
   <div class="max-w-6xl mx-auto px-6">
     <div class="text-center mb-12 reveal">
       <p class="section-label">3 simple steps</p>
       <h2 class="section-title">One platform for Safer<br>Roads made simple.</h2>
     </div>
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
       <div class="feature-card reveal" style="transition-delay:0ms">
         <div class="icon-circle">📍</div>
-        <h3 class="font-bold text-[#1d0b3c] text-base mb-2">Instant access to live traffic data near you.</h3>
-        <p class="text-sm text-[#64607a] leading-relaxed">See congestion, incidents, and hazards on your route in real time before you leave.</p>
+        <h3 class="font-bold text-brand text-base mb-2">Instant access to live traffic data near you.</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">See congestion, incidents, and hazards on your route in real time before you leave.</p>
       </div>
-
       <div class="feature-card reveal" style="transition-delay:80ms">
         <div class="icon-circle">⭐</div>
-        <h3 class="font-bold text-[#1d0b3c] text-base mb-2">Competitive safety scores with instant rewards.</h3>
-        <p class="text-sm text-[#64607a] leading-relaxed">Drive safely, earn a high score, and unlock partner discounts on fuel and insurance.</p>
+        <h3 class="font-bold text-brand text-base mb-2">Competitive safety scores with instant rewards.</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">Drive safely, earn a high score, and unlock partner discounts on fuel and insurance.</p>
       </div>
-
       <div class="feature-card reveal" style="transition-delay:160ms">
         <div class="icon-circle">🛡️</div>
-        <h3 class="font-bold text-[#1d0b3c] text-base mb-2">Flexibility to travel when and where you want safely.</h3>
-        <p class="text-sm text-[#64607a] leading-relaxed">Smart route alerts, emergency mode, and one-tap SOS — available on every journey.</p>
+        <h3 class="font-bold text-brand text-base mb-2">Flexibility to travel when and where you want safely.</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">Smart route alerts, emergency mode, and one-tap SOS — available on every journey.</p>
       </div>
-
     </div>
   </div>
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     SPLIT 1 — Join as a Rider / Driver  (phone left, form right)
-═══════════════════════════════════════════════════════ -->
-<section class="py-20" style="background:#f8f5ff">
+<!-- ── Split 1: Professionals ────────────────────────────── -->
+<section class="py-20 bg-purple-soft">
   <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-
-    <!-- Phone mockup: Onboarding screen -->
     <div class="flex justify-center reveal-left">
       <div class="relative">
-        <!-- Decorative circle -->
         <div class="absolute -top-8 -left-8 w-48 h-48 rounded-full opacity-30 pointer-events-none"
              style="background:radial-gradient(circle,#76e000,transparent 70%)"></div>
         <div class="phone-frame">
           <div class="phone-notch"></div>
           <div class="phone-screen">
-            <!-- Onboarding header -->
-            <div class="px-4 pt-4 pb-2 flex items-center gap-2 border-b border-[#ede8f8]">
-              <div class="w-6 h-6 rounded-full" style="background:#f0ebff;display:flex;align-items:center;justify-content:center;font-size:12px">←</div>
-              <span class="text-sm font-bold text-[#1d0b3c]">Onboarding</span>
+            <div class="px-4 pt-4 pb-2 flex items-center gap-2 border-b border-purple-soft">
+              <span class="text-sm font-bold text-brand">Onboarding</span>
             </div>
             <div class="px-4 py-4">
-              <div class="text-xs text-[#64607a] mb-3">Status</div>
-              <!-- Status cards -->
+              <div class="text-xs text-gray-400 mb-3">Status</div>
               <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="rounded-xl p-3 text-center" style="background:#76e000">
-                  <div class="text-2xl font-extrabold text-white">4</div>
-                  <div class="text-white text-xs">Trips done</div>
-                </div>
-                <div class="rounded-xl p-3 text-center" style="background:#f59e0b">
-                  <div class="text-2xl font-extrabold text-white">2</div>
-                  <div class="text-white text-xs">Pending</div>
-                </div>
+                <div class="rounded-xl p-3 text-center bg-lime"><div class="text-2xl font-extrabold text-white">4</div><div class="text-white text-xs">Trips done</div></div>
+                <div class="rounded-xl p-3 text-center" style="background:#f59e0b"><div class="text-2xl font-extrabold text-white">2</div><div class="text-white text-xs">Pending</div></div>
               </div>
-              <!-- Onboarding tasks -->
-              <div class="text-xs text-[#64607a] mb-2 font-bold">Onboarding Tasks</div>
+              <div class="text-xs text-gray-400 mb-2 font-bold">Onboarding Tasks</div>
               <div class="space-y-2">
-                <div class="rounded-xl p-3" style="background:#edffd0;border:1px solid rgba(118,224,0,0.3)">
+                <div class="rounded-xl p-3 bg-lime-soft" style="border:1px solid rgba(118,224,0,.3)">
                   <div class="flex items-center justify-between mb-1">
-                    <div class="text-xs font-bold text-[#1d0b3c]">Confirm Profile Details</div>
-                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style="background:#76e000">›</div>
+                    <div class="text-xs font-bold text-brand">Confirm Profile Details</div>
+                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-white bg-lime text-xs font-bold">›</div>
                   </div>
-                  <div class="h-1.5 rounded-full bg-[#d0f0a0]">
-                    <div class="h-full rounded-full bg-[#1d0b3c]" style="width:100%"></div>
-                  </div>
-                  <div class="text-[10px] text-[#64607a] mt-0.5">100%</div>
+                  <div class="h-1.5 rounded-full bg-green-100"><div class="h-full rounded-full bg-brand" style="width:100%"></div></div>
+                  <div class="text-xs text-gray-400 mt-0.5">100%</div>
                 </div>
-                <div class="rounded-xl p-3" style="background:#f0ebff">
+                <div class="rounded-xl p-3 bg-purple-soft">
                   <div class="flex items-center justify-between mb-1">
-                    <div class="text-xs font-bold text-[#1d0b3c]">Enter References</div>
-                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style="background:#1d0b3c">›</div>
+                    <div class="text-xs font-bold text-brand">Enter References</div>
+                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-white bg-brand text-xs font-bold">›</div>
                   </div>
-                  <div class="h-1.5 rounded-full bg-[#d0c8e8]">
-                    <div class="h-full rounded-full" style="width:60%;background:#76e000"></div>
-                  </div>
-                  <div class="text-[10px] text-[#64607a] mt-0.5">60%</div>
+                  <div class="h-1.5 rounded-full" style="background:#d0c8e8"><div class="h-full rounded-full bg-lime" style="width:60%"></div></div>
+                  <div class="text-xs text-gray-400 mt-0.5">60%</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Small floating badge -->
         <div class="absolute -bottom-4 -right-6 bg-white rounded-2xl shadow-lg px-4 py-3">
-          <div class="text-xs text-[#64607a]">Joined this week</div>
-          <div class="font-extrabold text-lg" style="color:#1d0b3c"><span class="counter" data-target="342">0</span></div>
+          <div class="text-xs text-gray-400">Joined this week</div>
+          <div class="font-extrabold text-lg text-brand"><span class="counter" data-target="342">0</span></div>
         </div>
       </div>
     </div>
 
-    <!-- Right: join form -->
     <div class="reveal-right">
       <p class="section-label">Professionals</p>
-      <h2 class="section-title mb-4">Now Tracking Drivers,<br>Riders, and<br>Road Users</h2>
-      <p class="text-[#64607a] mb-6 leading-relaxed">
-        Join thousands of boda boda riders, taxi drivers, and commuters who are already contributing to safer roads across East Africa. Sign up free in under a minute.
-      </p>
-
+      <h2 class="section-title mb-4">Now Tracking Drivers,<br>Riders, and Road Users</h2>
+      <p class="text-gray-500 mb-6 leading-relaxed">Join thousands of boda boda riders, taxi drivers, and commuters already contributing to safer roads across East Africa. Sign up free in under a minute.</p>
       <div class="input-row mb-3 max-w-sm">
         <input type="tel" placeholder="Enter your phone number" />
         <button type="button">Send</button>
       </div>
-      <label class="flex items-start gap-2 text-xs text-[#64607a] max-w-sm mb-6">
-        <input type="checkbox" class="mt-0.5 shrink-0 accent-[#76e000]"/>
-        I agree to receive safety updates and messages from TraffIQ. Our privacy policy can be found here.
+      <label class="flex items-start gap-2 text-xs text-gray-400 max-w-sm mb-6">
+        <input type="checkbox" class="mt-0.5 shrink-0 accent-lime"/>
+        I agree to receive safety updates from TraffIQ. Our privacy policy can be found here.
       </label>
-
-      <div class="flex gap-3">
-        <a href="#" class="store-btn !bg-[#1d0b3c]">
+      <div class="flex gap-3 flex-wrap">
+        <a href="#" class="store-btn">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <div>
-            <div style="font-size:10px;opacity:.75">App Store</div>
-            <div style="font-size:13px;font-weight:800">iOS App</div>
-          </div>
+          <div><div style="font-size:10px;opacity:.75">App Store</div><div style="font-size:13px;font-weight:800">iOS App</div></div>
         </a>
-        <a href="#" class="store-btn !bg-[#1d0b3c]">
+        <a href="#" class="store-btn">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-          <div>
-            <div style="font-size:10px;opacity:.75">Google Play</div>
-            <div style="font-size:13px;font-weight:800">Android</div>
-          </div>
+          <div><div style="font-size:10px;opacity:.75">Google Play</div><div style="font-size:13px;font-weight:800">Android</div></div>
         </a>
       </div>
     </div>
@@ -359,81 +360,49 @@
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     SPLIT 2 — Facilities / Authorities  (text left, phone + map right)
-═══════════════════════════════════════════════════════ -->
+<!-- ── Split 2: Authorities ──────────────────────────────── -->
 <section id="facilities" class="py-20 bg-white">
   <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-
-    <!-- Left: text -->
     <div class="reveal-left">
       <p class="section-label">Authorities &amp; Fleet Managers</p>
-      <h2 class="section-title mb-4">Don't waste Another day<br><span style="color:#76e000">let's Start!</span></h2>
-      <p class="text-[#64607a] mb-6 leading-relaxed">
-        Authorities can't afford to miss another accident. Fleet managers can't ignore reckless drivers. Register now and start monitoring road safety intelligence in real time.
-      </p>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">
-        Get Started →
-      </a>
+      <h2 class="section-title mb-4">Don't waste Another day<br><span class="text-lime">let's Start!</span></h2>
+      <p class="text-gray-500 mb-6 leading-relaxed">Authorities can't afford to miss another accident. Fleet managers can't ignore reckless drivers. Register now and start monitoring road safety intelligence in real time.</p>
+      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">Get Started →</a>
     </div>
-
-    <!-- Right: phone with map -->
     <div class="flex justify-center lg:justify-end reveal-right">
       <div class="relative">
-        <!-- Decorative circle bottom-right -->
         <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-25 pointer-events-none"
              style="background:radial-gradient(circle,#76e000,transparent 70%)"></div>
-
         <div class="phone-frame">
           <div class="phone-notch"></div>
           <div class="phone-screen">
-            <!-- Map header -->
-            <div class="px-4 pt-3 pb-2 flex items-center justify-between" style="background:#1d0b3c">
+            <div class="px-4 pt-3 pb-2 flex items-center justify-between bg-brand">
               <span class="text-white text-xs font-bold">Live Dashboard</span>
               <div class="live-badge" style="font-size:10px;padding:3px 10px">
-                <span class="pulse-dot w-1.5 h-1.5 rounded-full" style="background:#5ab300"></span>LIVE
+                <span class="pulse-dot w-1.5 h-1.5 rounded-full bg-lime-dark"></span>LIVE
               </div>
             </div>
-            <!-- Map -->
             <div style="height:200px;background:#dce8f0;position:relative;overflow:hidden">
               <svg viewBox="0 0 240 200" class="w-full h-full">
                 <rect width="240" height="200" fill="#dce8f0"/>
-                <!-- Roads -->
                 <line x1="0" y1="100" x2="240" y2="100" stroke="#b8d0e0" stroke-width="16"/>
                 <line x1="120" y1="0" x2="120" y2="200" stroke="#b8d0e0" stroke-width="12"/>
-                <line x1="0" y1="50" x2="240" y2="150" stroke="#c8d8e8" stroke-width="8"/>
-                <!-- Traffic overlays -->
                 <line x1="0" y1="100" x2="100" y2="100" stroke="#76e000" stroke-width="5" opacity=".8"/>
                 <line x1="100" y1="100" x2="155" y2="100" stroke="#f59e0b" stroke-width="5" opacity=".8"/>
                 <line x1="155" y1="100" x2="240" y2="100" stroke="#ef4444" stroke-width="5" opacity=".8"/>
                 <line x1="120" y1="0" x2="120" y2="200" stroke="#76e000" stroke-width="4" opacity=".6"/>
-                <!-- Pins -->
                 <circle cx="155" cy="100" r="10" fill="#ef4444" opacity=".9"/>
                 <circle cx="155" cy="100" r="16" fill="none" stroke="#ef4444" stroke-width="2" opacity=".3"/>
                 <circle cx="70" cy="60" r="8" fill="#f59e0b" opacity=".9"/>
                 <circle cx="190" cy="130" r="7" fill="#76e000" opacity=".9"/>
-                <circle cx="120" cy="50" r="6" fill="#76e000" opacity=".9"/>
               </svg>
             </div>
-            <!-- Floating time badge -->
             <div class="absolute" style="bottom:50px;right:12px;background:#1d0b3c;color:white;border-radius:12px;padding:6px 12px;font-weight:800;font-size:18px">11:00</div>
-            <!-- Alert badge -->
             <div class="absolute" style="bottom:46px;left:14px;background:#ef4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px">!</div>
-
-            <!-- Footer stats -->
-            <div class="grid grid-cols-3 divide-x py-3 text-center" style="border-top:1px solid #ede8f8;divide-color:#ede8f8">
-              <div class="px-2">
-                <div class="font-extrabold text-sm" style="color:#ef4444">3</div>
-                <div class="text-[10px] text-[#64607a]">Incidents</div>
-              </div>
-              <div class="px-2">
-                <div class="font-extrabold text-sm" style="color:#f59e0b">247</div>
-                <div class="text-[10px] text-[#64607a]">Active</div>
-              </div>
-              <div class="px-2">
-                <div class="font-extrabold text-sm" style="color:#76e000">89%</div>
-                <div class="text-[10px] text-[#64607a]">Clear</div>
-              </div>
+            <div class="grid grid-cols-3 divide-x py-3 text-center" style="border-top:1px solid #ede8f8">
+              <div class="px-2"><div class="font-extrabold text-sm text-red-500">3</div><div class="text-xs text-gray-400">Incidents</div></div>
+              <div class="px-2"><div class="font-extrabold text-sm text-yellow-500">247</div><div class="text-xs text-gray-400">Active</div></div>
+              <div class="px-2"><div class="font-extrabold text-sm text-lime">89%</div><div class="text-xs text-gray-400">Clear</div></div>
             </div>
           </div>
         </div>
@@ -443,67 +412,46 @@
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     SPLIT 3 — Search / Coverage (map left, bullets right)
-═══════════════════════════════════════════════════════ -->
-<section id="how-it-works" class="py-20" style="background:#f0ebff">
+<!-- ── Split 3: Coverage ─────────────────────────────────── -->
+<section id="coverage" class="py-20 bg-purple-soft">
   <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-
-    <!-- Left: city map visual -->
     <div class="reveal-left">
       <div class="map-container" style="height:360px;position:relative">
         <svg viewBox="0 0 480 360" class="w-full h-full">
           <rect width="480" height="360" fill="#dce8f0"/>
-          <!-- City grid -->
           <line x1="0" y1="90" x2="480" y2="90" stroke="#b0c8d8" stroke-width="14"/>
           <line x1="0" y1="180" x2="480" y2="180" stroke="#b0c8d8" stroke-width="14"/>
           <line x1="0" y1="270" x2="480" y2="270" stroke="#b0c8d8" stroke-width="10"/>
           <line x1="120" y1="0" x2="120" y2="360" stroke="#b0c8d8" stroke-width="10"/>
           <line x1="240" y1="0" x2="240" y2="360" stroke="#b0c8d8" stroke-width="14"/>
           <line x1="360" y1="0" x2="360" y2="360" stroke="#b0c8d8" stroke-width="10"/>
-          <!-- Traffic overlays -->
           <line x1="0" y1="180" x2="180" y2="180" stroke="#76e000" stroke-width="7" opacity=".7"/>
           <line x1="180" y1="180" x2="300" y2="180" stroke="#f59e0b" stroke-width="7" opacity=".7"/>
           <line x1="300" y1="180" x2="480" y2="180" stroke="#ef4444" stroke-width="7" opacity=".7"/>
           <line x1="240" y1="0" x2="240" y2="360" stroke="#76e000" stroke-width="6" opacity=".6"/>
-          <!-- City labels -->
-          <text x="60" y="160" fill="#8899aa" font-size="12" font-weight="600" text-anchor="middle">Zone A</text>
-          <text x="300" y="80" fill="#8899aa" font-size="12" font-weight="600" text-anchor="middle">Zone B</text>
-          <text x="400" y="250" fill="#8899aa" font-size="12" font-weight="600" text-anchor="middle">Zone C</text>
-          <!-- Map pins -->
-          <circle cx="120" cy="180" r="12" fill="#76e000" opacity=".9"/>
-          <text x="120" y="184" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
-          <circle cx="300" cy="180" r="14" fill="#ef4444" opacity=".9"/>
-          <text x="300" y="185" fill="white" font-size="12" font-weight="900" text-anchor="middle">!</text>
+          <circle cx="120" cy="180" r="12" fill="#76e000" opacity=".9"/><text x="120" y="184" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
+          <circle cx="300" cy="180" r="14" fill="#ef4444" opacity=".9"/><text x="300" y="185" fill="white" font-size="12" font-weight="900" text-anchor="middle">!</text>
           <circle cx="300" cy="180" r="22" fill="none" stroke="#ef4444" stroke-width="2" opacity=".3"/>
           <circle cx="240" cy="90" r="11" fill="#f59e0b" opacity=".9"/>
-          <circle cx="60" cy="270" r="11" fill="#76e000" opacity=".9"/>
-          <text x="60" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
+          <circle cx="60" cy="270" r="11" fill="#76e000" opacity=".9"/><text x="60" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
           <circle cx="400" cy="180" r="10" fill="#76e000" opacity=".9"/>
-          <circle cx="360" cy="270" r="11" fill="#1d0b3c" opacity=".9"/>
-          <text x="360" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">i</text>
+          <circle cx="360" cy="270" r="11" fill="#1d0b3c" opacity=".9"/><text x="360" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">i</text>
         </svg>
-
-        <!-- Legend overlay -->
         <div class="absolute bottom-4 left-4 bg-white rounded-xl px-4 py-3 shadow-lg text-xs space-y-1.5">
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded" style="background:#76e000"></span><span class="text-[#64607a]">Clear</span></div>
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded" style="background:#f59e0b"></span><span class="text-[#64607a]">Moderate</span></div>
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded" style="background:#ef4444"></span><span class="text-[#64607a]">Congested</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-lime"></span><span class="text-gray-500">Clear</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-yellow-400"></span><span class="text-gray-500">Moderate</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-red-400"></span><span class="text-gray-500">Congested</span></div>
         </div>
-
-        <!-- Active users badge -->
-        <div class="absolute top-4 right-4 bg-white rounded-xl px-3 py-2 shadow-lg flex items-center gap-2 text-xs font-bold text-[#1d0b3c]">
-          <span class="pulse-dot w-2 h-2 rounded-full" style="background:#76e000"></span>
+        <div class="absolute top-4 right-4 bg-white rounded-xl px-3 py-2 shadow-lg flex items-center gap-2 text-xs font-bold text-brand">
+          <span class="pulse-dot w-2 h-2 rounded-full bg-lime"></span>
           <span class="counter" data-target="247">0</span> Active
         </div>
       </div>
     </div>
 
-    <!-- Right: bullets -->
     <div class="reveal-right">
       <p class="section-label">Real-Time Coverage</p>
       <h2 class="section-title mb-4">Next-Level Road Safety<br>Intelligence</h2>
-
       <ul class="check-list mb-8">
         <li>Live crowdsourced incident feeds updated every 5 seconds</li>
         <li>Overspeed hotspot mapping across all transport modes</li>
@@ -511,179 +459,116 @@
         <li>2M+ km of journeys tracked and analysed</li>
         <li>Emergency SOS with instant location share</li>
       </ul>
-
-      <!-- Stats row -->
       <div class="grid grid-cols-3 gap-4 mb-8">
         <div class="text-center">
-          <div class="text-3xl font-extrabold" style="color:#1d0b3c"><span class="counter" data-target="5000">0</span></div>
-          <div class="text-xs text-[#64607a] mt-1">Active Users</div>
+          <div class="text-3xl font-extrabold text-brand"><span class="counter" data-target="5000">0</span></div>
+          <div class="text-xs text-gray-400 mt-1">Active Users</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-extrabold" style="color:#1d0b3c">3</div>
-          <div class="text-xs text-[#64607a] mt-1">Cities Live</div>
+          <div class="text-3xl font-extrabold text-brand">3</div>
+          <div class="text-xs text-gray-400 mt-1">Cities Live</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-extrabold" style="color:#1d0b3c"><span class="counter" data-target="50000">0</span></div>
-          <div class="text-xs text-[#64607a] mt-1">Incidents</div>
+          <div class="text-3xl font-extrabold text-brand"><span class="counter" data-target="50000">0</span></div>
+          <div class="text-xs text-gray-400 mt-1">Incidents</div>
         </div>
       </div>
-
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">
-        View Live Dashboard →
-      </a>
+      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">View Live Dashboard →</a>
     </div>
-
   </div>
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     DOWNLOAD CTA BANNER
-═══════════════════════════════════════════════════════ -->
+<!-- ── Download CTA ──────────────────────────────────────── -->
 <section class="py-20 bg-white">
   <div class="max-w-6xl mx-auto px-6">
     <div class="cta-banner reveal">
       <div class="grid lg:grid-cols-2 gap-12 items-center relative z-10">
-
-        <!-- Left: text + store buttons -->
         <div>
           <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
             Download the App<br>
-            <span style="color:#76e000">to work the way you want</span>
+            <span class="text-lime">to work the way you want</span>
           </h2>
-          <p class="text-white/60 mb-8 leading-relaxed">
-            TraffIQ is free for all road users. Track journeys, report incidents, and check live traffic — right from your phone.
-          </p>
+          <p class="text-white/60 mb-8 leading-relaxed">TraffIQ is free for all road users. Track journeys, report incidents, and check live traffic — right from your phone.</p>
           <div class="flex flex-wrap gap-3">
             <a href="#" class="store-btn-light">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              <div>
-                <div style="font-size:10px;opacity:.7">Download on the</div>
-                <div style="font-size:14px;font-weight:800">App Store</div>
-              </div>
+              <div><div style="font-size:10px;opacity:.7">Download on the</div><div style="font-size:14px;font-weight:800">App Store</div></div>
             </a>
             <a href="#" class="store-btn-light">
               <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-              <div>
-                <div style="font-size:10px;opacity:.7">GET IT ON</div>
-                <div style="font-size:14px;font-weight:800">Google Play</div>
-              </div>
+              <div><div style="font-size:10px;opacity:.7">GET IT ON</div><div style="font-size:14px;font-weight:800">Google Play</div></div>
             </a>
           </div>
         </div>
-
-        <!-- Right: two phone mockups (earnings + chat) -->
         <div class="flex justify-center lg:justify-end gap-4 items-end">
-          <!-- Phone 1: Safety Score / Earnings -->
-          <div class="phone-frame" style="width:200px;transform:translateY(20px)">
+          <div class="phone-frame" style="width:185px;transform:translateY(20px)">
             <div class="phone-notch"></div>
             <div class="phone-screen">
               <div class="px-3 py-3">
-                <div class="text-xs font-bold text-[#1d0b3c] mb-2">Safety Score</div>
-                <div class="flex items-baseline gap-1 mb-1">
-                  <span class="text-2xl font-extrabold" style="color:#1d0b3c">87</span>
-                  <span class="text-xs text-[#64607a]">/ 100</span>
-                </div>
-                <div class="h-2 rounded-full bg-[#e8f0f8] mb-3">
-                  <div class="h-full rounded-full" style="width:87%;background:linear-gradient(90deg,#76e000,#5ab300)"></div>
-                </div>
-                <div class="text-xs text-[#64607a] mb-3">Earnings this month</div>
-                <div class="text-xl font-extrabold text-[#1d0b3c] mb-1">USh 456,600</div>
-                <div class="text-xs text-[#76e000] font-bold mb-3">+UGX 1,291 today</div>
-                <!-- Mini bar chart -->
+                <div class="text-xs font-bold text-brand mb-2">Safety Score</div>
+                <div class="flex items-baseline gap-1 mb-1"><span class="text-2xl font-extrabold text-brand">87</span><span class="text-xs text-gray-400">/ 100</span></div>
+                <div class="h-2 rounded-full bg-gray-100 mb-3"><div class="h-full rounded-full bg-lime" style="width:87%"></div></div>
+                <div class="text-xs text-gray-400 mb-1">Earnings this month</div>
+                <div class="text-lg font-extrabold text-brand mb-0.5">USh 456,600</div>
+                <div class="text-xs text-lime font-bold mb-3">+UGX 1,291 today</div>
                 <div class="flex items-end gap-1 h-10">
-                  <div class="flex-1 rounded-t" style="background:#76e000;height:40%"></div>
-                  <div class="flex-1 rounded-t" style="background:#76e000;height:60%"></div>
-                  <div class="flex-1 rounded-t" style="background:#f59e0b;height:80%"></div>
-                  <div class="flex-1 rounded-t" style="background:#76e000;height:50%"></div>
-                  <div class="flex-1 rounded-t" style="background:#76e000;height:100%"></div>
-                  <div class="flex-1 rounded-t" style="background:#76e000;height:70%"></div>
+                  <div class="flex-1 rounded-t bg-lime" style="height:40%"></div>
+                  <div class="flex-1 rounded-t bg-lime" style="height:60%"></div>
+                  <div class="flex-1 rounded-t bg-yellow-400" style="height:80%"></div>
+                  <div class="flex-1 rounded-t bg-lime" style="height:50%"></div>
+                  <div class="flex-1 rounded-t bg-lime" style="height:100%"></div>
+                  <div class="flex-1 rounded-t bg-lime" style="height:70%"></div>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- Phone 2: Incident Chat / Alerts -->
-          <div class="phone-frame" style="width:200px">
+          <div class="phone-frame" style="width:185px">
             <div class="phone-notch"></div>
             <div class="phone-screen">
               <div class="px-3 py-3">
-                <div class="text-xs font-bold text-[#1d0b3c] mb-3">Safety Alerts</div>
-                <!-- Chat-style alerts -->
+                <div class="text-xs font-bold text-brand mb-3">Safety Alerts</div>
                 <div class="space-y-2">
-                  <div class="rounded-xl p-2.5" style="background:#fef3c7;border:1px solid #fde68a">
-                    <div class="text-[10px] font-bold text-[#92400e] mb-0.5">⚠ Sara Kimani</div>
-                    <div class="text-[11px] text-[#78350f]">Rider overspeed detected 67km/h</div>
-                  </div>
-                  <div class="rounded-xl p-2.5" style="background:#dcfce7;border:1px solid #86efac">
-                    <div class="text-[10px] font-bold text-[#166534] mb-0.5">✓ JB Driver</div>
-                    <div class="text-[11px] text-[#14532d]">Trip completed safely</div>
-                  </div>
-                  <div class="rounded-xl p-2.5" style="background:#fee2e2;border:1px solid #fca5a5">
-                    <div class="text-[10px] font-bold text-[#991b1b] mb-0.5">🚨 David Obuya</div>
-                    <div class="text-[11px] text-[#7f1d1d]">Emergency SOS activated</div>
-                  </div>
-                  <div class="rounded-xl p-2.5" style="background:#f0ebff;border:1px solid #d8b4fe">
-                    <div class="text-[10px] font-bold text-[#5b21b6] mb-0.5">📍 Alex Smith</div>
-                    <div class="text-[11px] text-[#4c1d95]">Incident reported: Pothole</div>
-                  </div>
+                  <div class="rounded-xl p-2" style="background:#fef3c7;border:1px solid #fde68a"><div class="text-xs font-bold text-yellow-800 mb-0.5">⚠ Sara Kimani</div><div class="text-xs text-yellow-700">Rider at 67km/h</div></div>
+                  <div class="rounded-xl p-2" style="background:#dcfce7;border:1px solid #86efac"><div class="text-xs font-bold text-green-800 mb-0.5">✓ JB Driver</div><div class="text-xs text-green-700">Trip completed safely</div></div>
+                  <div class="rounded-xl p-2" style="background:#fee2e2;border:1px solid #fca5a5"><div class="text-xs font-bold text-red-800 mb-0.5">🚨 David Obuya</div><div class="text-xs text-red-700">Emergency SOS</div></div>
+                  <div class="rounded-xl p-2 bg-purple-soft"><div class="text-xs font-bold text-purple-800 mb-0.5">📍 Alex Smith</div><div class="text-xs text-purple-700">Pothole reported</div></div>
                 </div>
-                <!-- Reply bar -->
-                <div class="mt-3 flex items-center gap-2 rounded-full px-3 py-2" style="background:#f0ebff">
-                  <span class="text-[11px] text-[#64607a] flex-1">Send a message</span>
-                  <span class="text-xs" style="color:#76e000">→</span>
+                <div class="mt-3 flex items-center gap-2 rounded-full px-3 py-2 bg-purple-soft">
+                  <span class="text-xs text-gray-400 flex-1">Send a message</span>
+                  <span class="text-xs text-lime">→</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </section>
 
 
-<!-- ══════════════════════════════════════════════════════
-     FOOTER
-═══════════════════════════════════════════════════════ -->
-<footer id="contact" style="background:#1d0b3c" class="pt-14 pb-8">
+<!-- ── Footer ────────────────────────────────────────────── -->
+<footer id="contact" class="pt-14 pb-8 bg-brand">
   <div class="max-w-6xl mx-auto px-6">
-
     <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-10">
-
-      <!-- Brand -->
       <div class="col-span-2 md:col-span-1">
         <a href="#" class="flex items-center gap-2 mb-4 select-none">
-          <svg width="30" height="30" viewBox="0 0 100 100" fill="none">
-            <rect width="100" height="100" rx="20" fill="#2d1850"/>
-            <path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/>
-            <rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/>
-          </svg>
-          <span class="font-extrabold text-lg">
-            <span class="text-white">TRAFF</span><span style="color:#76e000">IQ</span>
-          </span>
+          <svg width="30" height="30" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="#2d1850"/><path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/><rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/></svg>
+          <span class="font-extrabold text-lg"><span class="text-white">TRAFF</span><span class="text-lime">IQ</span></span>
         </a>
-        <p class="text-sm text-white/40 leading-relaxed mb-4">
-          East Africa's crowdsourced road safety intelligence platform.
-        </p>
-        <a href="mailto:hello@tukutuku.org" class="text-sm text-white/40 hover:text-white/70 transition-colors flex items-center gap-1.5">
-          <span>✉</span> hello@tukutuku.org
-        </a>
+        <p class="text-sm text-white/40 leading-relaxed mb-4">East Africa's crowdsourced road safety intelligence platform.</p>
+        <a href="mailto:hello@tukutuku.org" class="text-sm text-white/40 hover:text-white/70 transition-colors">✉ hello@tukutuku.org</a>
       </div>
-
-      <!-- General -->
       <div>
         <h4 class="text-sm font-bold text-white mb-4">General</h4>
         <ul class="space-y-3 text-sm text-white/45">
-          <li><a href="#" class="hover:text-white transition-colors">Professionals</a></li>
+          <li><a href="#features"   class="hover:text-white transition-colors">Professionals</a></li>
           <li><a href="#facilities" class="hover:text-white transition-colors">Facilities</a></li>
-          <li><a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a></li>
-          <li><a href="#contact" class="hover:text-white transition-colors">Contact</a></li>
+          <li><a href="#coverage"   class="hover:text-white transition-colors">Coverage</a></li>
+          <li><a href="#contact"    class="hover:text-white transition-colors">Contact</a></li>
         </ul>
       </div>
-
-      <!-- Support -->
       <div>
         <h4 class="text-sm font-bold text-white mb-4">Support</h4>
         <ul class="space-y-3 text-sm text-white/45">
@@ -693,33 +578,24 @@
           <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
         </ul>
       </div>
-
-      <!-- CTA -->
       <div>
-        <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary !text-sm !py-3 !px-5 mb-6 w-full justify-center">
+        <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary text-sm py-3 px-5 mb-6 w-full justify-center" style="padding:12px 20px;font-size:14px">
           View Dashboard →
         </a>
-        <!-- Social icons -->
         <div class="flex gap-3">
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,0.08)">
+          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
           </a>
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,0.08)">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-          </a>
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,0.08)">
+          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
           </a>
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,0.08)">
+          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
           </a>
         </div>
       </div>
-
     </div>
-
-    <div class="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/25"
-         style="border-top:1px solid rgba(255,255,255,0.07)">
+    <div class="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/25" style="border-top:1px solid rgba(255,255,255,.07)">
       <span>© 2025 Tukutuku Labs · TraffIQ</span>
       <div class="flex gap-6">
         <a href="#" class="hover:text-white/50 transition-colors">Cookie Policy</a>
@@ -730,6 +606,37 @@
   </div>
 </footer>
 
-<script type="module" src="/src/main.ts"></script>
+<script>
+  // Sticky nav
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 10));
+
+  // Mobile menu
+  const btn  = document.getElementById('menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.add('hidden')));
+
+  // Scroll reveal
+  const ro = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => ro.observe(el));
+
+  // Counters
+  function countUp(el) {
+    const target = +el.dataset.target;
+    const t0 = performance.now(), dur = 1400;
+    (function step(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target).toLocaleString();
+      if (p < 1) requestAnimationFrame(step); else el.textContent = target.toLocaleString() + '+';
+    })(t0);
+  }
+  const co = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); co.unobserve(e.target); } });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.counter').forEach(el => co.observe(el));
+</script>
 </body>
 </html>
