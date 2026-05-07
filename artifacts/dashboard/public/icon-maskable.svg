@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed purple background (safe zone: inner 80%) -->
+  <rect width="512" height="512" fill="#1d0b3c"/>
+  <!-- Scale icon down to safe zone (80% = 204px padding each side = content 308px) -->
+  <g transform="translate(102, 102) scale(0.6)">
+    <path d="M256 72 L100 440 L162 440 L256 196 Z" fill="#76e000"/>
+    <path d="M256 72 L412 440 L350 440 L256 196 Z" fill="#76e000"/>
+    <rect x="148" y="298" width="216" height="52" rx="10" fill="#76e000"/>
+    <rect x="244" y="72" width="24" height="72" rx="6" fill="#1d0b3c"/>
+  </g>
+</svg>
