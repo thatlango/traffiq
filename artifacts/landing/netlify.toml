@@ -1,0 +1,15 @@
+[build]
+  command = "pnpm install --filter \"@workspace/landing...\" --no-frozen-lockfile && pnpm --filter @workspace/landing run build"
+  publish = "artifacts/landing/dist"
+  base    = "."
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "10"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

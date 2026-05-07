@@ -1,0 +1,50 @@
+{
+  "name": "TraffIQ Dashboard",
+  "short_name": "TraffIQ",
+  "description": "Real-time traffic intelligence dashboard for East Africa. Live road safety, incident reporting, and driver analytics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d0b3c",
+  "theme_color": "#76e000",
+  "categories": ["navigation", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "label": "TraffIQ Live Traffic Dashboard",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live Map",
+      "url": "/?tab=map",
+      "description": "Open the live traffic map"
+    },
+    {
+      "name": "Incidents",
+      "url": "/?tab=incidents",
+      "description": "View recent incidents"
+    }
+  ]
+}

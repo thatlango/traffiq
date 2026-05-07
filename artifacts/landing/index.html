@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TraffIQ is East Africa's crowdsourced traffic intelligence platform. Real-time road safety, incident reporting, and driver safety scoring for Kampala and beyond." />
+    <meta name="theme-color" content="#1d0b3c" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="TraffIQ – East Africa's Traffic Intelligence Platform" />
+    <meta property="og:description" content="Every road user becomes a live traffic sensor. Real-time crowdsourced safety data for better cities." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://traffiq.tukutuku.org" />
+
+    <title>TraffIQ – East Africa's Traffic Intelligence Platform</title>
+
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+
+  <body>
+
+    <!-- ── Navigation ───────────────────────────────────────────── -->
+    <header id="nav" class="fixed top-0 inset-x-0 z-50 transition-all duration-300">
+      <nav class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+        <a href="#" class="flex items-center gap-2.5 select-none">
+          <!-- Inline road-A icon -->
+          <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="100" height="100" rx="20" fill="#1d0b3c"/>
+            <path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/>
+            <rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/>
+            <rect x="46" y="10" width="8" height="18" rx="2" fill="#1d0b3c"/>
+          </svg>
+          <span class="text-[22px] font-extrabold tracking-tight leading-none">
+            <span class="text-white">TRAFF</span><span style="color:#76e000">IQ</span>
+          </span>
+        </a>
+
+        <div class="hidden md:flex items-center gap-8">
+          <a href="#features"    class="text-sm text-white/60 hover:text-white transition-colors font-semibold">Features</a>
+          <a href="#how-it-works" class="text-sm text-white/60 hover:text-white transition-colors font-semibold">How It Works</a>
+          <a href="#audience"    class="text-sm text-white/60 hover:text-white transition-colors font-semibold">Who It's For</a>
+          <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener"
+             class="btn-lime !py-2.5 !px-6 !text-sm !font-bold">
+            Launch Dashboard →
+          </a>
+        </div>
+
+        <button id="menu-btn" class="md:hidden text-white p-2 -mr-2" aria-label="Toggle menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </nav>
+
+      <!-- Mobile menu -->
+      <div id="mobile-menu" class="hidden md:hidden bg-[#1d0b3c]/98 border-t border-white/10 px-6 py-5 space-y-4 backdrop-blur-lg">
+        <a href="#features"    class="block text-white/70 hover:text-white font-semibold py-1">Features</a>
+        <a href="#how-it-works" class="block text-white/70 hover:text-white font-semibold py-1">How It Works</a>
+        <a href="#audience"    class="block text-white/70 hover:text-white font-semibold py-1">Who It's For</a>
+        <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener"
+           class="block text-center btn-lime !py-3 !px-6 !text-sm">
+          Launch Dashboard →
+        </a>
+      </div>
+    </header>
+
+
+    <!-- ── Hero ─────────────────────────────────────────────────── -->
+    <section class="relative min-h-screen flex items-center pt-16 overflow-hidden">
+      <div class="hero-grid absolute inset-0 pointer-events-none"></div>
+
+      <!-- Glow orb -->
+      <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full pointer-events-none"
+           style="background: radial-gradient(ellipse, rgba(118,224,0,0.08) 0%, transparent 70%)"></div>
+
+      <div class="max-w-7xl mx-auto px-6 py-28 relative z-10 w-full">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+          <!-- Left: copy -->
+          <div>
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
+                 style="border: 1px solid rgba(118,224,0,0.3); background: rgba(118,224,0,0.08)">
+              <span class="live-dot w-2 h-2 rounded-full" style="background:#76e000"></span>
+              <span class="text-sm font-semibold" style="color:#76e000">Live Traffic Intelligence</span>
+            </div>
+
+            <h1 class="text-5xl md:text-6xl lg:text-[68px] font-extrabold leading-[1.05] mb-6 tracking-tight">
+              East Africa's<br>
+              <span style="color:#76e000">Smarter Roads</span><br>
+              Start Here.
+            </h1>
+
+            <p class="text-lg text-white/60 max-w-lg mb-10 leading-relaxed">
+              TraffIQ turns every road user into a live safety sensor. Crowdsourced incident alerts, AI-powered driver scoring, and real-time traffic intelligence — built for Kampala and beyond.
+            </p>
+
+            <div class="flex flex-wrap gap-4">
+              <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-lime">
+                Launch Dashboard →
+              </a>
+              <a href="#how-it-works" class="btn-ghost">
+                See How It Works
+              </a>
+            </div>
+
+            <p class="mt-8 text-sm text-white/35">
+              Trusted by traffic authorities · Fleet managers · Road safety NGOs
+            </p>
+          </div>
+
+          <!-- Right: mock traffic map card -->
+          <div class="hidden lg:block">
+            <div class="relative rounded-2xl overflow-hidden"
+                 style="background: #221345; border: 1px solid rgba(118,224,0,0.2); padding: 4px;">
+              <!-- Fake map header -->
+              <div class="flex items-center justify-between px-4 py-3" style="background:#1d0b3c; border-radius: 14px 14px 0 0">
+                <div class="flex items-center gap-2">
+                  <span class="live-dot w-2 h-2 rounded-full" style="background:#76e000"></span>
+                  <span class="text-xs font-bold" style="color:#76e000">LIVE MAP · KAMPALA</span>
+                </div>
+                <span class="text-xs text-white/40">Updated 2s ago</span>
+              </div>
+              <!-- Fake map body -->
+              <div class="relative h-72 overflow-hidden" style="background: #1a0d34">
+                <!-- Road grid lines -->
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 290" preserveAspectRatio="xMidYMid slice">
+                  <!-- Major roads -->
+                  <line x1="0" y1="145" x2="400" y2="145" stroke="#2d1b5e" stroke-width="12"/>
+                  <line x1="200" y1="0" x2="200" y2="290" stroke="#2d1b5e" stroke-width="12"/>
+                  <line x1="0" y1="80" x2="400" y2="210" stroke="#2d1b5e" stroke-width="8"/>
+                  <line x1="0" y1="210" x2="400" y2="80" stroke="#2d1b5e" stroke-width="6"/>
+                  <!-- Minor roads -->
+                  <line x1="100" y1="0" x2="100" y2="290" stroke="#231554" stroke-width="5"/>
+                  <line x1="300" y1="0" x2="300" y2="290" stroke="#231554" stroke-width="5"/>
+                  <line x1="0" y1="50" x2="400" y2="50" stroke="#231554" stroke-width="4"/>
+                  <line x1="0" y1="240" x2="400" y2="240" stroke="#231554" stroke-width="4"/>
+
+                  <!-- Traffic overlays: green = clear, yellow = moderate, red = congested -->
+                  <line x1="0" y1="145" x2="160" y2="145" stroke="#76e000" stroke-width="6" opacity="0.7"/>
+                  <line x1="240" y1="145" x2="400" y2="145" stroke="#76e000" stroke-width="6" opacity="0.7"/>
+                  <line x1="160" y1="145" x2="240" y2="145" stroke="#f59e0b" stroke-width="6" opacity="0.7"/>
+                  <line x1="200" y1="0" x2="200" y2="100" stroke="#ef4444" stroke-width="6" opacity="0.7"/>
+                  <line x1="200" y1="100" x2="200" y2="290" stroke="#76e000" stroke-width="6" opacity="0.7"/>
+
+                  <!-- Incident markers -->
+                  <circle cx="200" cy="145" r="8" fill="#ef4444" opacity="0.9"/>
+                  <circle cx="200" cy="145" r="14" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.4"/>
+                  <circle cx="160" cy="80" r="6" fill="#f59e0b" opacity="0.9"/>
+                  <circle cx="300" cy="200" r="5" fill="#76e000" opacity="0.9"/>
+                  <circle cx="100" cy="145" r="5" fill="#76e000" opacity="0.9"/>
+                </svg>
+
+                <!-- Legend -->
+                <div class="absolute bottom-3 left-3 rounded-lg px-3 py-2 space-y-1"
+                     style="background: rgba(29,11,60,0.85); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px)">
+                  <div class="flex items-center gap-2 text-xs text-white/70">
+                    <span class="inline-block w-4 h-1.5 rounded" style="background:#76e000"></span> Clear
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-white/70">
+                    <span class="inline-block w-4 h-1.5 rounded" style="background:#f59e0b"></span> Moderate
+                  </div>
+                  <div class="flex items-center gap-2 text-xs text-white/70">
+                    <span class="inline-block w-4 h-1.5 rounded" style="background:#ef4444"></span> Congested
+                  </div>
+                </div>
+
+                <!-- Active users badge -->
+                <div class="absolute top-3 right-3 rounded-full px-3 py-1 flex items-center gap-1.5"
+                     style="background: rgba(118,224,0,0.15); border: 1px solid rgba(118,224,0,0.3)">
+                  <span class="live-dot w-1.5 h-1.5 rounded-full" style="background:#76e000"></span>
+                  <span class="text-xs font-bold" style="color:#76e000">247 active</span>
+                </div>
+              </div>
+
+              <!-- Map footer stats -->
+              <div class="grid grid-cols-3 divide-x py-3"
+                   style="divide-color: rgba(255,255,255,0.07); border-top: 1px solid rgba(255,255,255,0.07)">
+                <div class="text-center px-4">
+                  <div class="text-lg font-extrabold" style="color:#ef4444">3</div>
+                  <div class="text-xs text-white/40">Incidents</div>
+                </div>
+                <div class="text-center px-4">
+                  <div class="text-lg font-extrabold" style="color:#f59e0b">2</div>
+                  <div class="text-xs text-white/40">Hotspots</div>
+                </div>
+                <div class="text-center px-4">
+                  <div class="text-lg font-extrabold" style="color:#76e000">89%</div>
+                  <div class="text-xs text-white/40">Roads Clear</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── Stats bar ─────────────────────────────────────────────── -->
+    <div class="road-divider"></div>
+    <section class="py-14" style="background: rgba(34,19,69,0.5)">
+      <div class="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div class="fade-up">
+          <div class="text-4xl font-extrabold counter" style="color:#76e000" data-target="5000">0</div>
+          <div class="text-sm text-white/45 mt-1 font-semibold">Active Road Users</div>
+        </div>
+        <div class="fade-up">
+          <div class="text-4xl font-extrabold counter" style="color:#76e000" data-target="50000">0</div>
+          <div class="text-sm text-white/45 mt-1 font-semibold">Incidents Tracked</div>
+        </div>
+        <div class="fade-up">
+          <div class="text-4xl font-extrabold counter" style="color:#76e000" data-target="3">0</div>
+          <div class="text-sm text-white/45 mt-1 font-semibold">Cities Covered</div>
+        </div>
+        <div class="fade-up">
+          <div class="text-4xl font-extrabold" style="color:#76e000">99.9<span class="text-2xl">%</span></div>
+          <div class="text-sm text-white/45 mt-1 font-semibold">Platform Uptime</div>
+        </div>
+      </div>
+    </section>
+    <div class="road-divider"></div>
+
+
+    <!-- ── Features ──────────────────────────────────────────────── -->
+    <section id="features" class="py-28">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <p class="text-sm font-bold uppercase tracking-widest mb-3" style="color:#76e000">Platform Capabilities</p>
+          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Built for Real Roads</h2>
+          <p class="text-white/55 text-lg max-w-xl mx-auto">
+            Everything you need to understand, navigate, and improve road safety — in real time.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger">
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">🗺️</div>
+            <h3 class="text-lg font-bold mb-2">Live Traffic Map</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              Real-time congestion heatmaps updated every 5 seconds. Color-coded road segments show free flow, moderate traffic, heavy congestion, and active incidents.
+            </p>
+          </div>
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">⭐</div>
+            <h3 class="text-lg font-bold mb-2">Driver Safety Scores</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              AI-powered scoring based on speed compliance, braking smoothness, acceleration patterns, and passenger ratings. Scores update automatically after every trip.
+            </p>
+          </div>
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">🚨</div>
+            <h3 class="text-lg font-bold mb-2">Incident Reporting</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              Crowdsource accidents, road hazards, police checkpoints, and broken traffic lights. Nearby users confirm reports to boost accuracy.
+            </p>
+          </div>
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">🛡️</div>
+            <h3 class="text-lg font-bold mb-2">Emergency Mode</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              One-tap SOS shares live GPS, journey data, and driver behavior with trusted contacts and emergency responders. Evidence captured with timestamp and device signature.
+            </p>
+          </div>
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">🏍️</div>
+            <h3 class="text-lg font-bold mb-2">Boda Boda Mode</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              Dedicated rider tracking for motorcycle taxis. Detects aggressive acceleration, sudden braking, weaving, and riding against traffic. Passengers receive real-time safety warnings.
+            </p>
+          </div>
+
+          <div class="feature-card fade-up">
+            <div class="icon-wrap">🏢</div>
+            <h3 class="text-lg font-bold mb-2">Fleet Intelligence</h3>
+            <p class="text-white/55 text-sm leading-relaxed">
+              Monitor every driver across your fleet from a single dashboard. Safety scores, overspeed events, trip logs, and risk alerts — all in one place.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── How It Works ──────────────────────────────────────────── -->
+    <section id="how-it-works" class="py-28" style="background: rgba(34,19,69,0.4)">
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <p class="text-sm font-bold uppercase tracking-widest mb-3" style="color:#76e000">The Process</p>
+          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">How TraffIQ Works</h2>
+          <p class="text-white/55 text-lg max-w-xl mx-auto">
+            Three simple steps turn millions of daily journeys into actionable road intelligence.
+          </p>
+        </div>
+
+        <div class="relative">
+          <!-- Connecting line (desktop) -->
+          <div class="hidden md:block absolute top-6 left-[calc(16.67%-12px)] right-[calc(16.67%-12px)] h-0.5"
+               style="background: linear-gradient(90deg, #76e000, rgba(118,224,0,0.2))"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+            <div class="fade-up text-center">
+              <div class="step-number mx-auto mb-5">1</div>
+              <h3 class="text-xl font-extrabold mb-3">Download & Join</h3>
+              <p class="text-white/55 text-sm leading-relaxed">
+                Road users download the TraffIQ mobile app. Choose your transport mode — car, boda boda, bus, or walking — and start your journey. GPS tracking begins automatically.
+              </p>
+            </div>
+
+            <div class="fade-up text-center">
+              <div class="step-number mx-auto mb-5">2</div>
+              <h3 class="text-xl font-extrabold mb-3">Every Trip Feeds the Grid</h3>
+              <p class="text-white/55 text-sm leading-relaxed">
+                Speed, location, acceleration, and braking data flow from every active user into the live traffic engine. Road segments update every 5 seconds with crowd-verified conditions.
+              </p>
+            </div>
+
+            <div class="fade-up text-center">
+              <div class="step-number mx-auto mb-5">3</div>
+              <h3 class="text-xl font-extrabold mb-3">Smarter, Safer Roads</h3>
+              <p class="text-white/55 text-sm leading-relaxed">
+                Authorities monitor the live dashboard. Drivers get safety scores. Commuters receive real-time alerts. Cities get the data they need to reduce accidents and congestion.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── Audience ──────────────────────────────────────────────── -->
+    <section id="audience" class="py-28">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <p class="text-sm font-bold uppercase tracking-widest mb-3" style="color:#76e000">Built For Everyone</p>
+          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Who Uses TraffIQ</h2>
+          <p class="text-white/55 text-lg max-w-xl mx-auto">
+            From daily commuters to city planners — TraffIQ delivers the right intelligence to the right people.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger">
+
+          <div class="audience-card fade-up">
+            <div class="text-4xl mb-4">🚶</div>
+            <h3 class="text-lg font-bold mb-2">Citizens &amp; Commuters</h3>
+            <p class="text-white/50 text-sm leading-relaxed">
+              Navigate with real-time safety alerts. Report hazards in one tap. Know if your boda rider is speeding before it's too late.
+            </p>
+          </div>
+
+          <div class="audience-card fade-up">
+            <div class="text-4xl mb-4">🏛️</div>
+            <h3 class="text-lg font-bold mb-2">Traffic Authorities</h3>
+            <p class="text-white/50 text-sm leading-relaxed">
+              Live incident feeds, overspeed corridor maps, and replay journey evidence for digital enforcement. Built for transport regulators and road safety NGOs.
+            </p>
+          </div>
+
+          <div class="audience-card fade-up">
+            <div class="text-4xl mb-4">🚌</div>
+            <h3 class="text-lg font-bold mb-2">Fleet Managers</h3>
+            <p class="text-white/50 text-sm leading-relaxed">
+              Monitor every driver in your fleet. Get instant risk alerts, safety leaderboards, and detailed trip logs — across cars, buses, trucks, and boda bodas.
+            </p>
+          </div>
+
+          <div class="audience-card fade-up">
+            <div class="text-4xl mb-4">📋</div>
+            <h3 class="text-lg font-bold mb-2">Insurance Companies</h3>
+            <p class="text-white/50 text-sm leading-relaxed">
+              Power Usage-Based Insurance with real driving behavior. Safer drivers qualify for lower premiums. Integrate TraffIQ's Driver Risk Intelligence into your underwriting.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── CTA ───────────────────────────────────────────────────── -->
+    <section class="py-28 relative overflow-hidden" style="background: #221345">
+      <div class="absolute inset-0 pointer-events-none"
+           style="background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(118,224,0,0.07) 0%, transparent 70%)"></div>
+      <div class="max-w-3xl mx-auto px-6 text-center relative z-10 fade-up">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
+             style="border: 1px solid rgba(118,224,0,0.3); background: rgba(118,224,0,0.08)">
+          <span class="live-dot w-2 h-2 rounded-full" style="background:#76e000"></span>
+          <span class="text-sm font-semibold" style="color:#76e000">Dashboard Live Now</span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-6">
+          Ready to see your city's<br>
+          <span style="color:#76e000">roads in real time?</span>
+        </h2>
+        <p class="text-white/55 text-lg mb-10 max-w-xl mx-auto">
+          The TraffIQ dashboard is live. View live traffic conditions, safety hotspots, and incident reports — right now.
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+          <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-lime">
+            Open Live Dashboard →
+          </a>
+          <a href="mailto:hello@tukutuku.org" class="btn-ghost">
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── Footer ────────────────────────────────────────────────── -->
+    <footer class="py-12" style="border-top: 1px solid rgba(255,255,255,0.06)">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+
+          <a href="#" class="flex items-center gap-2.5 select-none">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="100" height="100" rx="20" fill="#1d0b3c"/>
+              <path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/>
+              <rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/>
+              <rect x="46" y="10" width="8" height="18" rx="2" fill="#1d0b3c"/>
+            </svg>
+            <span class="text-lg font-extrabold">
+              <span class="text-white">TRAFF</span><span style="color:#76e000">IQ</span>
+            </span>
+          </a>
+
+          <div class="flex items-center gap-6 text-sm text-white/40">
+            <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="hover:text-white/70 transition-colors">Dashboard</a>
+            <a href="#features"    class="hover:text-white/70 transition-colors">Features</a>
+            <a href="#how-it-works" class="hover:text-white/70 transition-colors">How It Works</a>
+            <a href="mailto:hello@tukutuku.org" class="hover:text-white/70 transition-colors">Contact</a>
+          </div>
+
+          <p class="text-sm text-white/25">
+            © 2025 TraffIQ · Tukutuku Labs
+          </p>
+
+        </div>
+
+        <div class="mt-8 pt-6 flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs text-white/20"
+             style="border-top: 1px solid rgba(255,255,255,0.05)">
+          <span>🟢 Clear roads</span>
+          <span>🟡 Moderate traffic</span>
+          <span>🔴 Congestion</span>
+          <span>🟣 Overspeed zone</span>
+          <span>⚫ Accident / Hazard</span>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
