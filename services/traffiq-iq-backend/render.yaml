@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: traffiq-iq-api
+    runtime: node
+    region: frankfurt
+    rootDir: services/traffiq-iq-backend
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTO_MIGRATE
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: traffiq-iq-db
+          property: connectionString
+      - key: PUBLIC_WEB_BASE_URL
+        value: https://traffiq.tukutuku.org
+      - key: CORS_ORIGINS
+        value: https://traffiq.tukutuku.org
+
+databases:
+  - name: traffiq-iq-db
+    region: frankfurt
+    plan: free
+    databaseName: traffiq_iq_db
