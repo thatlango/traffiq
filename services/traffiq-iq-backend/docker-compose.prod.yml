@@ -32,11 +32,14 @@ services:
       MOBILE_PORT: 10001
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       AUTO_MIGRATE: "true"
+      MEDIA_ROOT: /data/media
     depends_on:
       postgres:
         condition: service_healthy
     expose:
       - "10001"
+    volumes:
+      - traffiq_media_data:/data/media
     networks:
       - traffiq_internal
 
@@ -78,6 +81,7 @@ services:
 
 volumes:
   traffiq_postgres_data:
+  traffiq_media_data:
   traffiq_caddy_data:
   traffiq_caddy_config:
 
