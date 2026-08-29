@@ -14,6 +14,7 @@ import { registerWebShareCheck } from './web-share-check.js';
 import { registerMobileCompatibilityExtra } from './mobile-compat-extra.js';
 import { registerMobileMedia } from './mobile-media.js';
 import { registerWebClientExtra } from './web-client-extra.js';
+import { registerPasswordRecovery } from './password-recovery.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -38,6 +39,7 @@ registerDisabledAuthRoutes(app);
 registerMobileCompatibilityFixes(app);
 registerWebClientExtra(app);
 registerMobileCompatibility(app);
+registerPasswordRecovery(app);
 registerWebGeo(app);
 registerWebPublic(app);
 // First-party Web runtime comes before the legacy extra layer because it owns
