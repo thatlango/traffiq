@@ -1,5 +1,6 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
+import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { config } from './config.js';
 import { query } from './db.js';
@@ -17,7 +18,13 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(password, encoded) {
-  const [scheme, saltEncoded, hashEncoded] = String(encoded).split('$');
+  const value = String(encoded ?? '');
+  // Supabase/GoTrue stores password credentials as bcrypt. Preserve those
+  // hashes during the final migration so existing users can sign in without
+  // a forced reset. New TraffIQ passwords continue to use scrypt.
+  if (/^\$2[aby]\$/.test(value)) return bcrypt.compare(password, value);
+
+  const [scheme, saltEncoded, hashEncoded] = value.split('$');
   if (scheme !== 'scrypt' || !saltEncoded || !hashEncoded) return false;
   const salt = Buffer.from(saltEncoded, 'base64url');
   const expected = Buffer.from(hashEncoded, 'base64url');
