@@ -11,6 +11,7 @@ import {
   issueAccessToken,
   issueRefreshToken,
   normalizeEmail,
+  passwordHashNeedsUpgrade,
   sha256,
   verifyPassword
 } from './auth.js';
@@ -202,6 +203,10 @@ app.post('/v1/auth/login', asyncRoute(async (req, res) => {
   const user = result.rows[0];
   if (!user || !(await verifyPassword(body.password, user.password_hash))) {
     return res.status(401).json({ error: 'invalid_credentials' });
+  }
+  if (passwordHashNeedsUpgrade(user.password_hash)) {
+    const upgradedHash = await hashPassword(body.password);
+    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [upgradedHash, user.id]);
   }
   res.json(await authResponse(user, body.device));
 }));

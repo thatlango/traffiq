@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { SignJWT, jwtVerify } from 'jose';
@@ -16,8 +17,14 @@ export async function hashPassword(password) {
   return `scrypt$${salt.toString('base64url')}$${Buffer.from(derived).toString('base64url')}`;
 }
 
+export function passwordHashNeedsUpgrade(encoded) {
+  return /^\$2[aby]\$/.test(String(encoded ?? ''));
+}
+
 export async function verifyPassword(password, encoded) {
-  const [scheme, saltEncoded, hashEncoded] = String(encoded).split('$');
+  const value = String(encoded ?? '');
+  if (passwordHashNeedsUpgrade(value)) return bcrypt.compare(password, value);
+  const [scheme, saltEncoded, hashEncoded] = value.split('$');
   if (scheme !== 'scrypt' || !saltEncoded || !hashEncoded) return false;
   const salt = Buffer.from(saltEncoded, 'base64url');
   const expected = Buffer.from(hashEncoded, 'base64url');
