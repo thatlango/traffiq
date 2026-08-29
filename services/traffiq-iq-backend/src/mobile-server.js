@@ -8,6 +8,7 @@ import { registerMobileCompatibilityFixes } from './mobile-compat-fixes.js';
 import { registerMobileCompatibility } from './mobile-compat.js';
 import { registerMobileCompatibilityExtra } from './mobile-compat-extra.js';
 import { registerMobileMedia } from './mobile-media.js';
+import { registerWebClientExtra } from './web-client-extra.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -26,6 +27,7 @@ app.get('/health', async (_req, res, next) => {
 });
 
 registerMobileCompatibilityFixes(app);
+registerWebClientExtra(app);
 registerMobileCompatibility(app);
 registerMobileCompatibilityExtra(app);
 registerMobileMedia(app);
