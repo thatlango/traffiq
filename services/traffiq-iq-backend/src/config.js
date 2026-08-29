@@ -23,7 +23,11 @@ export const config = {
   publicWebBaseUrl: process.env.PUBLIC_WEB_BASE_URL ?? '',
   routingBaseUrl: process.env.ROUTING_BASE_URL ?? 'https://router.project-osrm.org',
   geocodingBaseUrl: process.env.GEOCODING_BASE_URL ?? 'https://nominatim.openstreetmap.org',
-  geocodingUserAgent: process.env.GEOCODING_USER_AGENT ?? 'TraffIQ/1.0'
+  geocodingUserAgent: process.env.GEOCODING_USER_AGENT ?? 'TraffIQ/1.0',
+  photonBaseUrl: process.env.PHOTON_BASE_URL ?? 'https://photon.komoot.io',
+  googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY ?? '',
+  googlePlacesBaseUrl: process.env.GOOGLE_PLACES_BASE_URL ?? 'https://places.googleapis.com/v1',
+  placeSearchCacheSeconds: int('PLACE_SEARCH_CACHE_SECONDS', 45)
 };
 
 if (config.jwtSecret.length < 32) {
