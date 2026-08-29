@@ -74,6 +74,7 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web:/srv/traffiq-web:ro
       - traffiq_caddy_data:/data
       - traffiq_caddy_config:/config
     networks:
