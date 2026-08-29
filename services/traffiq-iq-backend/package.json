@@ -10,7 +10,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "migrate": "node scripts/migrate.js",
-    "check": "node --check src/server.js && node --check src/auth.js && node --check src/db.js && node --check src/geo.js && node --check scripts/migrate.js"
+    "check": "node --check src/server.js && node --check src/mobile-server.js && node --check src/auth.js && node --check src/db.js && node --check src/geo.js && node --check src/mobile-compat-fixes.js && node --check src/mobile-compat.js && node --check src/mobile-compat-extra.js && node --check src/mobile-media.js && node --check src/web-client-extra.js && node --check src/web-runtime.js && node --check src/web-geo.js && node --check src/web-public.js && node --check scripts/migrate.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
