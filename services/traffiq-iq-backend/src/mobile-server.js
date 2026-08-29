@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { checkDatabase, pool } from './db.js';
 import { runMigrations } from '../scripts/migrate.js';
+import { registerMobileCompatibilityFixes } from './mobile-compat-fixes.js';
 import { registerMobileCompatibility } from './mobile-compat.js';
 import { registerMobileCompatibilityExtra } from './mobile-compat-extra.js';
 
@@ -23,6 +24,7 @@ app.get('/health', async (_req, res, next) => {
   catch (error) { next(error); }
 });
 
+registerMobileCompatibilityFixes(app);
 registerMobileCompatibility(app);
 registerMobileCompatibilityExtra(app);
 
