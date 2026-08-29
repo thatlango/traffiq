@@ -16,3 +16,17 @@ api.traffiq.tukutuku.org {
     Referrer-Policy "strict-origin-when-cross-origin"
   }
 }
+
+traffiq.tukutuku.org {
+  encode zstd gzip
+  root * /srv/traffiq-web
+  try_files {path} /index.html
+  file_server
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+}
