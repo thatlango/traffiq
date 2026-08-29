@@ -16,6 +16,7 @@ import { registerMobileCompatibilityExtra } from './mobile-compat-extra.js';
 import { registerMobileMedia } from './mobile-media.js';
 import { registerWebClientExtra } from './web-client-extra.js';
 import { registerPasswordRecovery } from './password-recovery.js';
+import { registerPlacesApi } from './places-api.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -39,6 +40,7 @@ app.get('/health', async (_req, res, next) => {
 registerDisabledAuthRoutes(app);
 registerMobileFirstPartyAuth(app);
 registerMobileCompatibilityFixes(app);
+registerPlacesApi(app);
 registerWebClientExtra(app);
 // Recovery routes intentionally precede the legacy compatibility module,
 // because that module still contains the older request-only reset endpoint.
