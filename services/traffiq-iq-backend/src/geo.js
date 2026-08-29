@@ -13,6 +13,24 @@ const normalize = (value = '') => String(value)
   .replace(/[^a-z0-9]+/g, ' ')
   .trim();
 
+const CATEGORY_TAGS = [
+  { match: /\b(fuel|petrol|gas station|fuel station)\b/, tag: 'amenity:fuel' },
+  { match: /\b(hospital|clinic|health centre|health center)\b/, tag: 'amenity:hospital' },
+  { match: /\b(pharmacy|chemist)\b/, tag: 'amenity:pharmacy' },
+  { match: /\b(restaurant|food|eatery)\b/, tag: 'amenity:restaurant' },
+  { match: /\b(cafe|coffee)\b/, tag: 'amenity:cafe' },
+  { match: /\b(bank)\b/, tag: 'amenity:bank' },
+  { match: /\b(atm)\b/, tag: 'amenity:atm' },
+  { match: /\b(police|police station)\b/, tag: 'amenity:police' },
+  { match: /\b(school|primary school|secondary school)\b/, tag: 'amenity:school' },
+  { match: /\b(university|college)\b/, tag: 'amenity:university' },
+  { match: /\b(hotel|lodge|guest house|guesthouse)\b/, tag: 'tourism:hotel' },
+  { match: /\b(supermarket|grocery)\b/, tag: 'shop:supermarket' },
+  { match: /\b(market|marketplace)\b/, tag: 'amenity:marketplace' }
+];
+
+const categoryTagFor = query => CATEGORY_TAGS.find(item => item.match.test(normalize(query)))?.tag || null;
+
 const distanceM = (aLat, aLng, bLat, bLng) => {
   if (![aLat, aLng, bLat, bLng].every(Number.isFinite)) return null;
   const toRad = value => value * Math.PI / 180;
@@ -43,16 +61,20 @@ const textScore = (query, item) => {
 
 const rankPlaces = (items, { q, lat, lng, limit }) => {
   const seen = new Set();
-  return items
+  const ranked = items
     .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng) && item.name)
     .map(item => {
       const metres = distanceM(lat, lng, item.lat, item.lng);
       const countryCode = String(item.address?.country_code || item.address?.countrycode || '').toLowerCase();
-      const proximity = metres == null ? 0 : 220 / (1 + metres / 5000);
-      const ugandaBoost = countryCode === 'ug' ? 45 : 0;
-      const namedPoiBoost = item.category && !['place', 'boundary'].includes(String(item.category).toLowerCase()) ? 25 : 0;
+      const proximity = metres == null ? 0 : 260 / (1 + metres / 4500);
+      const ugandaBoost = countryCode === 'ug' ? 55 : 0;
+      const namedPoiBoost = item.category && !['place', 'boundary'].includes(String(item.category).toLowerCase()) ? 35 : 0;
       return { ...item, distance_m: metres == null ? null : Math.round(metres), _score: textScore(q, item) + proximity + ugandaBoost + namedPoiBoost };
-    })
+    });
+
+  const hasLocal = ranked.some(item => item.distance_m != null && item.distance_m <= 200000);
+  return ranked
+    .filter(item => !hasLocal || item.distance_m == null || item.distance_m <= 500000)
     .sort((a, b) => b._score - a._score || (a.distance_m ?? Number.MAX_SAFE_INTEGER) - (b.distance_m ?? Number.MAX_SAFE_INTEGER))
     .filter(item => {
       const key = `${normalize(item.name)}|${item.lat.toFixed(4)}|${item.lng.toFixed(4)}`;
@@ -104,6 +126,8 @@ async function searchPhoton({ q, lat, lng, limit }) {
   url.searchParams.set('q', q);
   url.searchParams.set('limit', String(Math.min(Math.max(limit * 2, 8), 20)));
   url.searchParams.set('lang', 'en');
+  const categoryTag = categoryTagFor(q);
+  if (categoryTag) url.searchParams.set('osm_tag', categoryTag);
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     url.searchParams.set('lat', String(lat));
     url.searchParams.set('lon', String(lng));
