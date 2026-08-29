@@ -6,6 +6,7 @@ import { checkDatabase, pool } from './db.js';
 import { runMigrations } from '../scripts/migrate.js';
 import { registerMobileCompatibilityFixes } from './mobile-compat-fixes.js';
 import { registerMobileCompatibility } from './mobile-compat.js';
+import { registerWebRuntime } from './web-runtime.js';
 import { registerMobileCompatibilityExtra } from './mobile-compat-extra.js';
 import { registerMobileMedia } from './mobile-media.js';
 import { registerWebClientExtra } from './web-client-extra.js';
@@ -29,6 +30,9 @@ app.get('/health', async (_req, res, next) => {
 registerMobileCompatibilityFixes(app);
 registerWebClientExtra(app);
 registerMobileCompatibility(app);
+// First-party Web runtime comes before the legacy extra layer because it owns
+// the unified /shared-trips reader for journey and standalone live shares.
+registerWebRuntime(app);
 registerMobileCompatibilityExtra(app);
 registerMobileMedia(app);
 
