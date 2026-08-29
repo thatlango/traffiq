@@ -38,8 +38,10 @@ app.get('/health', async (_req, res, next) => {
 registerDisabledAuthRoutes(app);
 registerMobileCompatibilityFixes(app);
 registerWebClientExtra(app);
-registerMobileCompatibility(app);
+// Recovery routes intentionally precede the legacy compatibility module,
+// because that module still contains the older request-only reset endpoint.
 registerPasswordRecovery(app);
+registerMobileCompatibility(app);
 registerWebGeo(app);
 registerWebPublic(app);
 // First-party Web runtime comes before the legacy extra layer because it owns
