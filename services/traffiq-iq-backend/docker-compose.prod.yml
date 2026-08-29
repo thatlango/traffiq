@@ -19,6 +19,27 @@ services:
     networks:
       - traffiq_internal
 
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["node", "src/mobile-server.js"]
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      MOBILE_PORT: 10001
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      AUTO_MIGRATE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "10001"
+    networks:
+      - traffiq_internal
+
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
@@ -42,6 +63,8 @@ services:
     restart: unless-stopped
     depends_on:
       api:
+        condition: service_started
+      mobile:
         condition: service_started
     ports:
       - "80:80"
