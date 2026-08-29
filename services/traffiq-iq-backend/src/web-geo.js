@@ -1,39 +1,37 @@
 import { authenticate } from './auth.js';
 import { config } from './config.js';
+import { searchPlaces } from './geo.js';
 
 const ok = (res, data, status = 200) => res.status(status).json({ data, error: null });
 const fail = (res, status, code, message) => res.status(status).json({ data: null, error: { code, message, details: null } });
 
 export function registerWebGeo(app) {
-  app.get('/v1/web/places/search', authenticate, async (req, res, next) => {
+  const searchHandler = async (req, res, next, wrapped = true) => {
     try {
       const q = String(req.query.q || '').trim();
-      if (q.length < 2) return ok(res, []);
+      if (q.length < 2) return wrapped ? ok(res, []) : res.json({ results: [] });
       const limit = Math.min(Math.max(Number(req.query.limit || 8), 1), 10);
-      const params = new URLSearchParams({ q, format: 'jsonv2', addressdetails: '1', limit: String(limit), dedupe: '1' });
-      const lat = Number(req.query.lat), lng = Number(req.query.lng);
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        const delta = 1.5;
-        params.set('viewbox', `${lng - delta},${lat + delta},${lng + delta},${lat - delta}`);
-        params.set('bounded', '0');
-      }
-      const response = await fetch(`${config.geocodingBaseUrl.replace(/\/$/, '')}/search?${params.toString()}`, {
-        headers: { 'User-Agent': config.geocodingUserAgent, 'Accept-Language': 'en', Accept: 'application/json' },
-        signal: AbortSignal.timeout(7000),
+      const lat = Number(req.query.lat);
+      const lng = Number(req.query.lng);
+      const results = await searchPlaces({
+        q,
+        lat: Number.isFinite(lat) ? lat : undefined,
+        lng: Number.isFinite(lng) ? lng : undefined,
+        limit
       });
-      if (!response.ok) return fail(res, 502, 'geocoder_unavailable', 'Place search is temporarily unavailable');
-      const rows = await response.json();
-      ok(res, (Array.isArray(rows) ? rows : []).map(row => ({
-        provider_place_id: String(row.place_id || ''),
-        name: row.name || row.display_name?.split(',')?.[0] || 'Place',
-        detail: row.display_name || null,
-        formatted_address: row.display_name || null,
-        lat: Number(row.lat),
-        lng: Number(row.lon),
-        source: 'nominatim',
-      })).filter(row => Number.isFinite(row.lat) && Number.isFinite(row.lng)));
-    } catch (error) { next(error); }
-  });
+      return wrapped ? ok(res, results) : res.json({ results });
+    } catch (error) {
+      if (String(error.message).includes('providers unavailable')) {
+        return fail(res, 502, 'geocoder_unavailable', 'Place search is temporarily unavailable');
+      }
+      next(error);
+    }
+  };
+
+  app.get('/v1/web/places/search', authenticate, (req, res, next) => searchHandler(req, res, next, true));
+  // Same contract as the primary API. This makes the Android /mobile/v1/geo/search
+  // path work through Caddy after /mobile is stripped.
+  app.get('/v1/geo/search', authenticate, (req, res, next) => searchHandler(req, res, next, false));
 
   app.post('/v1/web/roads/snap', authenticate, async (req, res, next) => {
     try {
