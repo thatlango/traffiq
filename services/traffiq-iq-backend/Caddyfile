@@ -1,6 +1,13 @@
 api.traffiq.tukutuku.org {
   encode zstd gzip
-  reverse_proxy api:10000
+
+  handle_path /mobile/* {
+    reverse_proxy mobile:10001
+  }
+
+  handle {
+    reverse_proxy api:10000
+  }
 
   header {
     Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
