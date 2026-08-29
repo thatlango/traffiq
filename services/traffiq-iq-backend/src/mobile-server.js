@@ -5,6 +5,7 @@ import { config } from './config.js';
 import { checkDatabase, pool } from './db.js';
 import { runMigrations } from '../scripts/migrate.js';
 import { registerDisabledAuthRoutes } from './auth-disabled.js';
+import { registerMobileFirstPartyAuth } from './mobile-auth.js';
 import { registerMobileCompatibilityFixes } from './mobile-compat-fixes.js';
 import { registerMobileCompatibility } from './mobile-compat.js';
 import { registerWebRuntime } from './web-runtime.js';
@@ -32,10 +33,11 @@ app.get('/health', async (_req, res, next) => {
   catch (error) { next(error); }
 });
 
-// Google OAuth is deliberately disabled while TraffIQ uses the temporary
-// first-party email/password session flow. Register this before compatibility
-// handlers so no legacy Google route is reachable.
+// Google OAuth stays disabled while TraffIQ uses the temporary first-party
+// email/password session flow. Register this before compatibility handlers so
+// no legacy Google route is reachable.
 registerDisabledAuthRoutes(app);
+registerMobileFirstPartyAuth(app);
 registerMobileCompatibilityFixes(app);
 registerWebClientExtra(app);
 // Recovery routes intentionally precede the legacy compatibility module,
