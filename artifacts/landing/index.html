@@ -1,642 +1,103 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="TraffIQ – East Africa's crowdsourced traffic intelligence platform. Real-time road safety, live incident reports, and driver safety scoring for Kampala and beyond." />
-  <meta name="theme-color" content="#1d0b3c" />
-  <meta property="og:title" content="TraffIQ – Smarter Roads for East Africa" />
-  <meta property="og:description" content="Every road user becomes a live traffic sensor. Download the app. View the dashboard." />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#10071f" />
+  <meta name="description" content="TraffIQ is a live road-intelligence and journey-safety platform for East Africa. Plan a trip, understand what is happening ahead, report road conditions and share journeys from one map-first experience." />
+  <meta property="og:title" content="TraffIQ — Know the road ahead" />
+  <meta property="og:description" content="Live road intelligence, safer journeys and community reports for East Africa." />
   <meta property="og:type" content="website" />
-  <title>TraffIQ – East Africa's Traffic Intelligence Platform</title>
-
-  <!-- Favicon inline -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231d0b3c'/><path d='M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z' fill='%2376e000'/><rect x='35' y='62' width='30' height='11' rx='3' fill='%2376e000'/></svg>" />
-
-  <!-- Fonts -->
+  <title>TraffIQ — Know the road ahead</title>
+  <link rel="icon" href="./public/icon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand:      '#1d0b3c',
-            'brand-mid':'#2d1850',
-            lime:       '#76e000',
-            'lime-dark':'#5ab300',
-            'lime-soft':'#edffd0',
-            'purple-soft':'#f0ebff',
-          },
-          fontFamily: { sans: ['"Open Sans"', 'sans-serif'] },
-        }
-      }
-    }
-  </script>
-
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0,0&family=Roboto+Flex:opsz,wght@8..144,300..900&display=swap" rel="stylesheet" />
   <style>
-    html { scroll-behavior: smooth; }
-    body { font-family: "Open Sans", sans-serif; overflow-x: hidden; }
-
-    /* Nav scroll effect */
-    #nav.scrolled { box-shadow: 0 2px 20px rgba(29,11,60,0.15); }
-
-    /* Buttons */
-    .btn-primary  { display:inline-flex;align-items:center;gap:8px;background:#76e000;color:#1d0b3c;font-weight:800;border-radius:9999px;padding:14px 28px;font-size:15px;text-decoration:none;transition:background .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(118,224,0,.3); }
-    .btn-primary:hover  { background:#5ab300;transform:translateY(-1px);box-shadow:0 6px 28px rgba(118,224,0,.4); }
-    .btn-purple   { display:inline-flex;align-items:center;gap:8px;background:#1d0b3c;color:#fff;font-weight:800;border-radius:9999px;padding:14px 28px;font-size:15px;text-decoration:none;transition:background .2s,transform .15s; }
-    .btn-purple:hover   { background:#2d1850;transform:translateY(-1px); }
-    .btn-outline  { display:inline-flex;align-items:center;gap:8px;border:2px solid #1d0b3c;color:#1d0b3c;font-weight:700;border-radius:9999px;padding:12px 26px;font-size:15px;text-decoration:none;transition:all .2s; }
-    .btn-outline:hover  { background:#1d0b3c;color:#fff; }
-    .btn-sm       { padding:10px 20px!important;font-size:13px!important; }
-
-    /* Store buttons */
-    .store-btn       { display:inline-flex;align-items:center;gap:10px;background:#1d0b3c;color:#fff;border-radius:12px;padding:10px 18px;text-decoration:none;transition:background .2s,transform .15s; }
-    .store-btn:hover { background:#2d1850;transform:translateY(-1px); }
-    .store-btn-light { display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:12px;padding:10px 18px;text-decoration:none;transition:background .2s; }
-    .store-btn-light:hover { background:rgba(255,255,255,.2); }
-
-    /* Cards */
-    .feature-card { background:#fff;border-radius:20px;padding:28px 24px;box-shadow:0 2px 24px rgba(29,11,60,.07);border:1px solid rgba(29,11,60,.06);transition:transform .2s,box-shadow .2s; }
-    .feature-card:hover { transform:translateY(-4px);box-shadow:0 8px 40px rgba(29,11,60,.12); }
-    .icon-circle  { width:56px;height:56px;border-radius:50%;background:#edffd0;display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:16px; }
-
-    /* Phone */
-    .phone-frame  { width:240px;border-radius:36px;background:#1d0b3c;padding:12px;box-shadow:0 24px 60px rgba(29,11,60,.25),0 0 0 1px rgba(29,11,60,.1);position:relative; }
-    .phone-notch  { width:80px;height:22px;border-radius:0 0 14px 14px;background:#1d0b3c;margin:0 auto 10px; }
-    .phone-screen { background:#f8f5ff;border-radius:26px;overflow:hidden; }
-
-    /* Stat pill */
-    .stat-pill { display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:50px;padding:8px 16px;box-shadow:0 4px 20px rgba(29,11,60,.12);font-size:13px;font-weight:700;color:#1d0b3c; }
-
-    /* Live badge */
-    .live-badge { display:inline-flex;align-items:center;gap:6px;background:rgba(118,224,0,.12);border:1px solid rgba(118,224,0,.3);border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;color:#5ab300; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.8)} }
-    .pulse-dot { animation:pulse 1.4s ease-in-out infinite; }
-
-    /* Section label */
-    .section-label { font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5ab300;margin-bottom:10px; }
-    .section-title { font-size:clamp(26px,4vw,42px);font-weight:800;line-height:1.15;color:#1d0b3c; }
-
-    /* Check list */
-    .check-list li { display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;font-size:15px;color:#64607a; }
-    .check-list li::before { content:"✓";display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#76e000;color:#1d0b3c;font-size:12px;font-weight:900;flex-shrink:0;margin-top:1px; }
-
-    /* Map container */
-    .map-container { background:#dce8f0;border-radius:24px;overflow:hidden;box-shadow:0 12px 48px rgba(29,11,60,.12); }
-
-    /* CTA banner */
-    .cta-banner { background:linear-gradient(135deg,#1d0b3c 0%,#2d0f5c 100%);border-radius:28px;padding:56px 48px;overflow:hidden;position:relative; }
-    .cta-banner::before { content:"";position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;background:rgba(118,224,0,.08); }
-
-    /* Form */
-    .input-row { display:flex;border:1.5px solid #d0c8e8;border-radius:12px;overflow:hidden;background:#fff; }
-    .input-row input { flex:1;padding:13px 16px;border:none;outline:none;font-size:14px;font-family:inherit;color:#1d0b3c;background:transparent; }
-    .input-row button { background:#1d0b3c;color:#fff;border:none;cursor:pointer;padding:0 22px;font-weight:700;font-size:14px;font-family:inherit;transition:background .2s; }
-    .input-row button:hover { background:#2d1850; }
-
-    /* Scroll reveal */
-    .reveal,.reveal-left,.reveal-right { opacity:0;transition:opacity .55s ease,transform .55s ease; }
-    .reveal       { transform:translateY(28px); }
-    .reveal-left  { transform:translateX(-32px); }
-    .reveal-right { transform:translateX(32px); }
-    .reveal.in,.reveal-left.in,.reveal-right.in { opacity:1;transform:none; }
-
-    @media (max-width:768px) {
-      .cta-banner { padding:36px 24px; }
-      .phone-frame { width:200px; }
+    :root{
+      --road-950:#10071f;--road-900:#171022;--road-800:#21162f;--road-700:#30203f;
+      --signal:#84e539;--signal-2:#a4f064;--signal-soft:#eaf9da;--sky:#4f9dff;
+      --amber:#f6b73c;--red:#f0525f;--paper:#f7f8fa;--ink:#16131b;--muted:#6c6573;
+      --border:rgba(22,19,27,.11);--shadow:0 24px 70px rgba(16,7,31,.12);
     }
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Roboto Flex",system-ui,sans-serif;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased}a{text-decoration:none;color:inherit}button,input{font:inherit}.material-symbols-rounded{font-variation-settings:'FILL' 0,'wght' 450,'GRAD' 0,'opsz' 24}.wrap{width:min(1180px,calc(100% - 40px));margin:auto}.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}.navin{height:72px;display:flex;align-items:center;gap:28px}.brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.03em;font-size:20px}.brand img{width:34px;height:34px;object-fit:contain}.brand b{color:#5fb817}.navlinks{margin-left:auto;display:flex;align-items:center;gap:26px;font-size:14px;font-weight:650;color:#625b68}.navlinks a:hover{color:var(--ink)}.cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:0 20px;border-radius:16px;font-weight:760;border:1px solid transparent;transition:.2s ease}.cta.primary{background:var(--road-950);color:white}.cta.primary:hover{transform:translateY(-1px);background:var(--road-800)}.cta.signal{background:var(--signal);color:var(--road-950);box-shadow:0 10px 28px rgba(132,229,57,.27)}.cta.signal:hover{background:var(--signal-2);transform:translateY(-1px)}.cta.ghost{border-color:var(--border);background:white}.mobile-menu{display:none;margin-left:auto;border:0;background:transparent}.hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#faf9fd 55%,#f4f8ef 100%);padding:76px 0 84px}.hero:before{content:"";position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(132,229,57,.18),transparent 67%);right:-170px;top:-180px}.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:64px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid rgba(95,184,23,.24);background:rgba(132,229,57,.11);border-radius:999px;color:#4c9415;font-weight:760;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 5px rgba(132,229,57,.17)}h1{font-size:clamp(44px,6.6vw,78px);line-height:.99;letter-spacing:-.055em;margin:23px 0 22px;max-width:780px}.accent{color:#64b91e}.hero p{font-size:19px;line-height:1.65;color:var(--muted);max-width:610px;margin:0 0 30px}.actions{display:flex;flex-wrap:wrap;gap:12px}.micro{display:flex;gap:18px;flex-wrap:wrap;margin-top:24px;color:#716a77;font-size:13px}.micro span{display:inline-flex;align-items:center;gap:6px}.product-preview{position:relative;min-height:530px}.map-card{position:absolute;inset:0;background:var(--road-950);border-radius:32px;overflow:hidden;box-shadow:0 35px 90px rgba(16,7,31,.22)}.map-grid{position:absolute;inset:0;background-color:#15202a;background-image:linear-gradient(35deg,transparent 46%,rgba(255,255,255,.045) 47%,rgba(255,255,255,.045) 49%,transparent 50%),linear-gradient(145deg,transparent 46%,rgba(255,255,255,.05) 47%,rgba(255,255,255,.05) 49%,transparent 50%);background-size:78px 78px;opacity:.88}.road{position:absolute;height:10px;background:#6a6d70;border:2px solid rgba(255,255,255,.16);border-radius:999px;transform-origin:left center}.r1{width:84%;left:5%;top:56%;transform:rotate(-7deg)}.r2{width:62%;left:32%;top:25%;transform:rotate(65deg)}.r3{width:48%;left:10%;top:29%;transform:rotate(31deg)}.route{position:absolute;width:71%;height:170px;left:13%;top:38%;border:5px solid var(--signal);border-color:var(--signal) var(--signal) transparent transparent;border-radius:50%;transform:rotate(11deg);filter:drop-shadow(0 0 8px rgba(132,229,57,.48))}.searchbox{position:absolute;top:18px;left:18px;right:18px;background:white;border-radius:18px;display:flex;align-items:center;gap:10px;min-height:56px;padding:0 16px;box-shadow:0 12px 32px rgba(0,0,0,.19)}.searchbox span{color:#6f6874}.searchbox b{font-size:15px}.route-card{position:absolute;left:18px;bottom:18px;width:min(370px,calc(100% - 36px));background:rgba(23,16,34,.94);color:white;border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(16px);border-radius:24px;padding:18px}.route-card .overline{font-size:12px;color:#afa7b8}.route-card h3{margin:4px 0 14px;font-size:20px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:rgba(255,255,255,.055);padding:11px;border-radius:14px}.metric small{display:block;color:#aea5b6;font-size:10px;text-transform:uppercase;letter-spacing:.08em}.metric strong{display:block;margin-top:3px;font-size:16px}.status-float{position:absolute;right:16px;top:92px;background:white;border-radius:16px;padding:12px 13px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;align-items:center;gap:9px;font-size:12px;font-weight:720}.incident{position:absolute;width:42px;height:42px;border-radius:50%;background:white;color:var(--red);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 22px rgba(0,0,0,.22);left:62%;top:44%}.section{padding:94px 0}.section.soft{background:var(--paper)}.kicker{color:#549e19;font-size:12px;text-transform:uppercase;letter-spacing:.13em;font-weight:800}.title{font-size:clamp(34px,4.8vw,54px);line-height:1.05;letter-spacing:-.04em;margin:12px 0 16px;max-width:780px}.lead{font-size:18px;line-height:1.65;color:var(--muted);max-width:720px}.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}.feature{padding:26px;border:1px solid var(--border);border-radius:24px;background:white}.icon{width:46px;height:46px;border-radius:15px;background:var(--signal-soft);display:grid;place-items:center;color:#4b9415;margin-bottom:22px}.feature h3{font-size:18px;margin:0 0 8px}.feature p{font-size:14px;line-height:1.55;color:var(--muted);margin:0}.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:42px}.step{position:relative;border:1px solid var(--border);border-radius:22px;padding:22px 18px;background:#fff;min-height:170px}.step-num{font-size:11px;font-weight:800;color:#6ba928;margin-bottom:28px}.step .material-symbols-rounded{font-size:26px;margin-bottom:10px}.step strong{display:block;font-size:15px}.step p{font-size:12px;line-height:1.5;color:var(--muted)}.dual{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:42px}.panel{border-radius:30px;padding:36px}.panel.dark{background:var(--road-950);color:white}.panel.light{background:#eef7e5}.panel .label{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.68}.panel h3{font-size:31px;letter-spacing:-.035em;margin:12px 0}.panel p{line-height:1.65;opacity:.75}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}.chip{padding:9px 12px;border-radius:999px;border:1px solid currentColor;font-size:12px;opacity:.78}.trust{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}.trust-list{display:grid;gap:14px}.trust-item{display:grid;grid-template-columns:40px 1fr;gap:14px;align-items:start}.trust-item i{width:40px;height:40px;border-radius:13px;background:var(--signal-soft);display:grid;place-items:center;color:#509519;font-style:normal}.trust-item strong{display:block;margin-top:2px}.trust-item p{margin:5px 0 0;color:var(--muted);font-size:14px;line-height:1.55}.final{padding:36px 0 90px}.final-card{background:var(--road-950);border-radius:34px;color:white;padding:56px;display:flex;align-items:center;justify-content:space-between;gap:36px;overflow:hidden;position:relative}.final-card:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(132,229,57,.13);right:-100px;bottom:-170px}.final-card h2{font-size:clamp(34px,4.5vw,56px);line-height:1.02;letter-spacing:-.045em;margin:0 0 12px}.final-card p{color:#bdb4c4;margin:0}.footer{border-top:1px solid var(--border);padding:28px 0 40px}.footerin{display:flex;align-items:center;justify-content:space-between;gap:20px;color:#746d79;font-size:13px}.footerlinks{display:flex;gap:18px}.only-mobile{display:none}
+    @media(max-width:980px){.navlinks{display:none}.mobile-menu{display:block}.hero-grid,.trust{grid-template-columns:1fr}.product-preview{min-height:490px}.feature-grid{grid-template-columns:1fr 1fr}.flow{grid-template-columns:repeat(3,1fr)}.dual{grid-template-columns:1fr}.hero{padding-top:52px}}
+    @media(max-width:640px){.wrap{width:min(100% - 28px,1180px)}.navin{height:64px}.navin>.cta{display:none}.hero{padding:38px 0 56px}.hero p{font-size:17px}.product-preview{min-height:430px;margin-top:8px}.map-card{border-radius:24px}.status-float{display:none}.feature-grid,.flow{grid-template-columns:1fr}.feature,.step{min-height:auto}.section{padding:70px 0}.panel{padding:27px}.final-card{padding:38px 26px;display:block}.final-card .actions{margin-top:24px}.footerin{display:block}.footerlinks{margin-top:12px;flex-wrap:wrap}.only-mobile{display:inline-flex}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
   </style>
 </head>
-<body class="bg-white text-brand font-sans">
-
-<!-- ── Nav ─────────────────────────────────────────────── -->
-<header id="nav" class="sticky top-0 z-50 bg-white border-b border-purple-soft transition-shadow duration-300">
-  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-
-    <a href="#" class="flex items-center gap-2.5 select-none">
-      <svg width="32" height="32" viewBox="0 0 100 100" fill="none">
-        <rect width="100" height="100" rx="20" fill="#1d0b3c"/>
-        <path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/>
-        <rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/>
-        <rect x="46" y="10" width="8" height="18" rx="2" fill="#1d0b3c"/>
-      </svg>
-      <span class="text-xl font-extrabold tracking-tight">
-        <span class="text-brand">TRAFF</span><span class="text-lime">IQ</span>
-      </span>
-    </a>
-
-    <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-gray-500">
-      <a href="#features"     class="hover:text-brand transition-colors">Professionals</a>
-      <a href="#facilities"   class="hover:text-brand transition-colors">Facilities</a>
-      <a href="#coverage"     class="hover:text-brand transition-colors">Coverage</a>
-      <a href="#contact"      class="hover:text-brand transition-colors">Contact</a>
-    </nav>
-
-    <div class="hidden md:flex items-center gap-3">
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener"
-         class="text-sm font-bold text-brand hover:text-lime-dark transition-colors px-2">Login</a>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple btn-sm">
-        Get Started
-      </a>
+<body>
+  <header class="nav">
+    <div class="wrap navin">
+      <a class="brand" href="#top" aria-label="TraffIQ home"><img src="./public/icon-mark.png" alt="" /><span>TRAFF<span style="color:#63b81e">IQ</span></span></a>
+      <nav class="navlinks" aria-label="Primary">
+        <a href="#product">Product</a><a href="#journey">How it works</a><a href="#organisations">For organisations</a><a href="#developers">Developers</a>
+      </nav>
+      <a class="cta primary" href="https://traffiqweb.tukutuku.org">Open TraffIQ Web <span class="material-symbols-rounded">arrow_forward</span></a>
+      <button class="mobile-menu" id="menu" aria-label="Open menu"><span class="material-symbols-rounded">menu</span></button>
     </div>
+  </header>
 
-    <button id="menu-btn" class="md:hidden p-2 text-brand" aria-label="Menu">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-      </svg>
-    </button>
-  </div>
-
-  <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-purple-soft px-6 py-4 space-y-3">
-    <a href="#features"   class="block py-2 font-semibold text-gray-500">Professionals</a>
-    <a href="#facilities" class="block py-2 font-semibold text-gray-500">Facilities</a>
-    <a href="#coverage"   class="block py-2 font-semibold text-gray-500">Coverage</a>
-    <a href="#contact"    class="block py-2 font-semibold text-gray-500">Contact</a>
-    <div class="pt-2 flex gap-3">
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-outline btn-sm flex-1 justify-center">Login</a>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-purple btn-sm flex-1 justify-center">Get Started</a>
-    </div>
-  </div>
-</header>
-
-
-<!-- ── Hero ─────────────────────────────────────────────── -->
-<section class="relative overflow-hidden" style="background:linear-gradient(160deg,#f0ebff 0%,#edffd0 100%)">
-  <div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-40 pointer-events-none"
-       style="background:radial-gradient(circle,rgba(118,224,0,.25),transparent 70%);transform:translate(30%,-30%)"></div>
-  <div class="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-30 pointer-events-none"
-       style="background:radial-gradient(circle,rgba(29,11,60,.15),transparent 70%);transform:translate(-30%,30%)"></div>
-
-  <div class="max-w-6xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center relative z-10">
-    <div class="reveal-left">
-      <div class="live-badge mb-6">
-        <span class="pulse-dot w-2 h-2 rounded-full bg-lime-dark"></span>
-        5,000+ Road users active in East Africa
-      </div>
-      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-5 text-brand">
-        See open roads in<br>real time and<br>
-        <span class="text-lime">stay safe!</span>
-      </h1>
-      <p class="text-gray-500 text-lg mb-8 leading-relaxed max-w-md">
-        Stay informed on your route, report incidents in one tap, and earn safety rewards at the end of every journey.
-      </p>
-      <div class="flex flex-wrap gap-3 mb-8">
-        <a href="#" class="store-btn">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <div><div style="font-size:10px;opacity:.75">Download on the</div><div style="font-size:14px;font-weight:800">App Store</div></div>
-        </a>
-        <a href="#" class="store-btn">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-          <div><div style="font-size:10px;opacity:.75">GET IT ON</div><div style="font-size:14px;font-weight:800">Google Play</div></div>
-        </a>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <div class="stat-pill"><span class="text-lime">★</span> 4.8 App Rating</div>
-        <div class="stat-pill"><span class="text-lime">✓</span> Free to use</div>
-        <div class="stat-pill"><span>📍</span> Kampala · Nairobi · Dar</div>
-      </div>
-    </div>
-
-    <!-- Phone mockup -->
-    <div class="flex justify-center lg:justify-end relative reveal-right">
-      <div class="absolute top-4 -left-4 z-20 bg-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-red-50">⚠️</div>
-        <div><div class="text-xs text-gray-400">Speed alert</div><div class="text-sm font-bold text-brand">Rider at 67 km/h</div></div>
-      </div>
-      <div class="absolute bottom-8 -left-6 z-20 bg-white rounded-2xl shadow-xl px-4 py-3">
-        <div class="text-xs text-gray-400 mb-1">Safety Score</div>
-        <div class="flex items-center gap-2"><div class="text-2xl font-extrabold text-lime">87</div><div class="text-xs text-gray-400">Safe Driver 🏆</div></div>
-        <div class="mt-1.5 h-1.5 rounded-full bg-lime-soft w-32 overflow-hidden">
-          <div class="h-full rounded-full bg-lime" style="width:87%"></div>
-        </div>
-      </div>
-      <div class="phone-frame">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="px-4 py-3 flex items-center justify-between bg-brand">
-            <span class="text-white text-xs font-bold">TRAFFIQ</span>
-            <div class="live-badge" style="font-size:10px;padding:3px 10px">
-              <span class="pulse-dot w-1.5 h-1.5 rounded-full bg-lime-dark"></span> LIVE
-            </div>
-          </div>
-          <div class="px-4 py-3">
-            <div class="text-xs text-gray-400 mb-1">Active Journey</div>
-            <div class="text-brand font-bold text-sm mb-3">Kampala CBD → Entebbe Rd</div>
-            <div class="rounded-xl p-3 mb-3 text-center bg-purple-soft">
-              <div class="text-3xl font-extrabold text-brand">42</div>
-              <div class="text-xs text-gray-400">km/h · Speed limit: 50</div>
-              <div class="mt-2 h-2 rounded-full bg-purple-200">
-                <div class="h-full rounded-full bg-lime" style="width:84%"></div>
-              </div>
-            </div>
-            <div class="rounded-xl overflow-hidden mb-3" style="height:110px">
-              <svg viewBox="0 0 240 110" class="w-full h-full">
-                <rect width="240" height="110" fill="#dce8f0"/>
-                <line x1="0" y1="55" x2="240" y2="55" stroke="#b8cfe0" stroke-width="14"/>
-                <line x1="120" y1="0" x2="120" y2="110" stroke="#b8cfe0" stroke-width="10"/>
-                <polyline points="20,75 60,55 100,45 140,48 180,42 220,40" stroke="#76e000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-                <circle cx="180" cy="42" r="6" fill="#1d0b3c"/>
-                <circle cx="60" cy="55" r="5" fill="#f59e0b"/>
-              </svg>
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-brand">3.2</div><div class="text-gray-400">km left</div></div>
-              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-brand">6 min</div><div class="text-gray-400">ETA</div></div>
-              <div class="rounded-lg py-2 bg-lime-soft"><div class="font-bold text-sm text-lime">Safe</div><div class="text-gray-400">Status</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── 3 Steps ───────────────────────────────────────────── -->
-<section id="features" class="py-20 bg-white">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-12 reveal">
-      <p class="section-label">3 simple steps</p>
-      <h2 class="section-title">One platform for Safer<br>Roads made simple.</h2>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="feature-card reveal" style="transition-delay:0ms">
-        <div class="icon-circle">📍</div>
-        <h3 class="font-bold text-brand text-base mb-2">Instant access to live traffic data near you.</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">See congestion, incidents, and hazards on your route in real time before you leave.</p>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:80ms">
-        <div class="icon-circle">⭐</div>
-        <h3 class="font-bold text-brand text-base mb-2">Competitive safety scores with instant rewards.</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Drive safely, earn a high score, and unlock partner discounts on fuel and insurance.</p>
-      </div>
-      <div class="feature-card reveal" style="transition-delay:160ms">
-        <div class="icon-circle">🛡️</div>
-        <h3 class="font-bold text-brand text-base mb-2">Flexibility to travel when and where you want safely.</h3>
-        <p class="text-sm text-gray-500 leading-relaxed">Smart route alerts, emergency mode, and one-tap SOS — available on every journey.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── Split 1: Professionals ────────────────────────────── -->
-<section class="py-20 bg-purple-soft">
-  <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-    <div class="flex justify-center reveal-left">
-      <div class="relative">
-        <div class="absolute -top-8 -left-8 w-48 h-48 rounded-full opacity-30 pointer-events-none"
-             style="background:radial-gradient(circle,#76e000,transparent 70%)"></div>
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="px-4 pt-4 pb-2 flex items-center gap-2 border-b border-purple-soft">
-              <span class="text-sm font-bold text-brand">Onboarding</span>
-            </div>
-            <div class="px-4 py-4">
-              <div class="text-xs text-gray-400 mb-3">Status</div>
-              <div class="grid grid-cols-2 gap-2 mb-4">
-                <div class="rounded-xl p-3 text-center bg-lime"><div class="text-2xl font-extrabold text-white">4</div><div class="text-white text-xs">Trips done</div></div>
-                <div class="rounded-xl p-3 text-center" style="background:#f59e0b"><div class="text-2xl font-extrabold text-white">2</div><div class="text-white text-xs">Pending</div></div>
-              </div>
-              <div class="text-xs text-gray-400 mb-2 font-bold">Onboarding Tasks</div>
-              <div class="space-y-2">
-                <div class="rounded-xl p-3 bg-lime-soft" style="border:1px solid rgba(118,224,0,.3)">
-                  <div class="flex items-center justify-between mb-1">
-                    <div class="text-xs font-bold text-brand">Confirm Profile Details</div>
-                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-white bg-lime text-xs font-bold">›</div>
-                  </div>
-                  <div class="h-1.5 rounded-full bg-green-100"><div class="h-full rounded-full bg-brand" style="width:100%"></div></div>
-                  <div class="text-xs text-gray-400 mt-0.5">100%</div>
-                </div>
-                <div class="rounded-xl p-3 bg-purple-soft">
-                  <div class="flex items-center justify-between mb-1">
-                    <div class="text-xs font-bold text-brand">Enter References</div>
-                    <div class="w-4 h-4 rounded-full flex items-center justify-center text-white bg-brand text-xs font-bold">›</div>
-                  </div>
-                  <div class="h-1.5 rounded-full" style="background:#d0c8e8"><div class="h-full rounded-full bg-lime" style="width:60%"></div></div>
-                  <div class="text-xs text-gray-400 mt-0.5">60%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="absolute -bottom-4 -right-6 bg-white rounded-2xl shadow-lg px-4 py-3">
-          <div class="text-xs text-gray-400">Joined this week</div>
-          <div class="font-extrabold text-lg text-brand"><span class="counter" data-target="342">0</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal-right">
-      <p class="section-label">Professionals</p>
-      <h2 class="section-title mb-4">Now Tracking Drivers,<br>Riders, and Road Users</h2>
-      <p class="text-gray-500 mb-6 leading-relaxed">Join thousands of boda boda riders, taxi drivers, and commuters already contributing to safer roads across East Africa. Sign up free in under a minute.</p>
-      <div class="input-row mb-3 max-w-sm">
-        <input type="tel" placeholder="Enter your phone number" />
-        <button type="button">Send</button>
-      </div>
-      <label class="flex items-start gap-2 text-xs text-gray-400 max-w-sm mb-6">
-        <input type="checkbox" class="mt-0.5 shrink-0 accent-lime"/>
-        I agree to receive safety updates from TraffIQ. Our privacy policy can be found here.
-      </label>
-      <div class="flex gap-3 flex-wrap">
-        <a href="#" class="store-btn">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-          <div><div style="font-size:10px;opacity:.75">App Store</div><div style="font-size:13px;font-weight:800">iOS App</div></div>
-        </a>
-        <a href="#" class="store-btn">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-          <div><div style="font-size:10px;opacity:.75">Google Play</div><div style="font-size:13px;font-weight:800">Android</div></div>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── Split 2: Authorities ──────────────────────────────── -->
-<section id="facilities" class="py-20 bg-white">
-  <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-    <div class="reveal-left">
-      <p class="section-label">Authorities &amp; Fleet Managers</p>
-      <h2 class="section-title mb-4">Don't waste Another day<br><span class="text-lime">let's Start!</span></h2>
-      <p class="text-gray-500 mb-6 leading-relaxed">Authorities can't afford to miss another accident. Fleet managers can't ignore reckless drivers. Register now and start monitoring road safety intelligence in real time.</p>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">Get Started →</a>
-    </div>
-    <div class="flex justify-center lg:justify-end reveal-right">
-      <div class="relative">
-        <div class="absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-25 pointer-events-none"
-             style="background:radial-gradient(circle,#76e000,transparent 70%)"></div>
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="px-4 pt-3 pb-2 flex items-center justify-between bg-brand">
-              <span class="text-white text-xs font-bold">Live Dashboard</span>
-              <div class="live-badge" style="font-size:10px;padding:3px 10px">
-                <span class="pulse-dot w-1.5 h-1.5 rounded-full bg-lime-dark"></span>LIVE
-              </div>
-            </div>
-            <div style="height:200px;background:#dce8f0;position:relative;overflow:hidden">
-              <svg viewBox="0 0 240 200" class="w-full h-full">
-                <rect width="240" height="200" fill="#dce8f0"/>
-                <line x1="0" y1="100" x2="240" y2="100" stroke="#b8d0e0" stroke-width="16"/>
-                <line x1="120" y1="0" x2="120" y2="200" stroke="#b8d0e0" stroke-width="12"/>
-                <line x1="0" y1="100" x2="100" y2="100" stroke="#76e000" stroke-width="5" opacity=".8"/>
-                <line x1="100" y1="100" x2="155" y2="100" stroke="#f59e0b" stroke-width="5" opacity=".8"/>
-                <line x1="155" y1="100" x2="240" y2="100" stroke="#ef4444" stroke-width="5" opacity=".8"/>
-                <line x1="120" y1="0" x2="120" y2="200" stroke="#76e000" stroke-width="4" opacity=".6"/>
-                <circle cx="155" cy="100" r="10" fill="#ef4444" opacity=".9"/>
-                <circle cx="155" cy="100" r="16" fill="none" stroke="#ef4444" stroke-width="2" opacity=".3"/>
-                <circle cx="70" cy="60" r="8" fill="#f59e0b" opacity=".9"/>
-                <circle cx="190" cy="130" r="7" fill="#76e000" opacity=".9"/>
-              </svg>
-            </div>
-            <div class="absolute" style="bottom:50px;right:12px;background:#1d0b3c;color:white;border-radius:12px;padding:6px 12px;font-weight:800;font-size:18px">11:00</div>
-            <div class="absolute" style="bottom:46px;left:14px;background:#ef4444;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px">!</div>
-            <div class="grid grid-cols-3 divide-x py-3 text-center" style="border-top:1px solid #ede8f8">
-              <div class="px-2"><div class="font-extrabold text-sm text-red-500">3</div><div class="text-xs text-gray-400">Incidents</div></div>
-              <div class="px-2"><div class="font-extrabold text-sm text-yellow-500">247</div><div class="text-xs text-gray-400">Active</div></div>
-              <div class="px-2"><div class="font-extrabold text-sm text-lime">89%</div><div class="text-xs text-gray-400">Clear</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── Split 3: Coverage ─────────────────────────────────── -->
-<section id="coverage" class="py-20 bg-purple-soft">
-  <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-    <div class="reveal-left">
-      <div class="map-container" style="height:360px;position:relative">
-        <svg viewBox="0 0 480 360" class="w-full h-full">
-          <rect width="480" height="360" fill="#dce8f0"/>
-          <line x1="0" y1="90" x2="480" y2="90" stroke="#b0c8d8" stroke-width="14"/>
-          <line x1="0" y1="180" x2="480" y2="180" stroke="#b0c8d8" stroke-width="14"/>
-          <line x1="0" y1="270" x2="480" y2="270" stroke="#b0c8d8" stroke-width="10"/>
-          <line x1="120" y1="0" x2="120" y2="360" stroke="#b0c8d8" stroke-width="10"/>
-          <line x1="240" y1="0" x2="240" y2="360" stroke="#b0c8d8" stroke-width="14"/>
-          <line x1="360" y1="0" x2="360" y2="360" stroke="#b0c8d8" stroke-width="10"/>
-          <line x1="0" y1="180" x2="180" y2="180" stroke="#76e000" stroke-width="7" opacity=".7"/>
-          <line x1="180" y1="180" x2="300" y2="180" stroke="#f59e0b" stroke-width="7" opacity=".7"/>
-          <line x1="300" y1="180" x2="480" y2="180" stroke="#ef4444" stroke-width="7" opacity=".7"/>
-          <line x1="240" y1="0" x2="240" y2="360" stroke="#76e000" stroke-width="6" opacity=".6"/>
-          <circle cx="120" cy="180" r="12" fill="#76e000" opacity=".9"/><text x="120" y="184" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
-          <circle cx="300" cy="180" r="14" fill="#ef4444" opacity=".9"/><text x="300" y="185" fill="white" font-size="12" font-weight="900" text-anchor="middle">!</text>
-          <circle cx="300" cy="180" r="22" fill="none" stroke="#ef4444" stroke-width="2" opacity=".3"/>
-          <circle cx="240" cy="90" r="11" fill="#f59e0b" opacity=".9"/>
-          <circle cx="60" cy="270" r="11" fill="#76e000" opacity=".9"/><text x="60" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">✓</text>
-          <circle cx="400" cy="180" r="10" fill="#76e000" opacity=".9"/>
-          <circle cx="360" cy="270" r="11" fill="#1d0b3c" opacity=".9"/><text x="360" y="274" fill="white" font-size="10" font-weight="900" text-anchor="middle">i</text>
-        </svg>
-        <div class="absolute bottom-4 left-4 bg-white rounded-xl px-4 py-3 shadow-lg text-xs space-y-1.5">
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-lime"></span><span class="text-gray-500">Clear</span></div>
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-yellow-400"></span><span class="text-gray-500">Moderate</span></div>
-          <div class="flex items-center gap-2"><span class="inline-block w-4 h-1.5 rounded bg-red-400"></span><span class="text-gray-500">Congested</span></div>
-        </div>
-        <div class="absolute top-4 right-4 bg-white rounded-xl px-3 py-2 shadow-lg flex items-center gap-2 text-xs font-bold text-brand">
-          <span class="pulse-dot w-2 h-2 rounded-full bg-lime"></span>
-          <span class="counter" data-target="247">0</span> Active
-        </div>
-      </div>
-    </div>
-
-    <div class="reveal-right">
-      <p class="section-label">Real-Time Coverage</p>
-      <h2 class="section-title mb-4">Next-Level Road Safety<br>Intelligence</h2>
-      <ul class="check-list mb-8">
-        <li>Live crowdsourced incident feeds updated every 5 seconds</li>
-        <li>Overspeed hotspot mapping across all transport modes</li>
-        <li>1,500+ Verified road users contributing daily</li>
-        <li>2M+ km of journeys tracked and analysed</li>
-        <li>Emergency SOS with instant location share</li>
-      </ul>
-      <div class="grid grid-cols-3 gap-4 mb-8">
-        <div class="text-center">
-          <div class="text-3xl font-extrabold text-brand"><span class="counter" data-target="5000">0</span></div>
-          <div class="text-xs text-gray-400 mt-1">Active Users</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-extrabold text-brand">3</div>
-          <div class="text-xs text-gray-400 mt-1">Cities Live</div>
-        </div>
-        <div class="text-center">
-          <div class="text-3xl font-extrabold text-brand"><span class="counter" data-target="50000">0</span></div>
-          <div class="text-xs text-gray-400 mt-1">Incidents</div>
-        </div>
-      </div>
-      <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary">View Live Dashboard →</a>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── Download CTA ──────────────────────────────────────── -->
-<section class="py-20 bg-white">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="cta-banner reveal">
-      <div class="grid lg:grid-cols-2 gap-12 items-center relative z-10">
+  <main id="top">
+    <section class="hero">
+      <div class="wrap hero-grid">
         <div>
-          <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
-            Download the App<br>
-            <span class="text-lime">to work the way you want</span>
-          </h2>
-          <p class="text-white/60 mb-8 leading-relaxed">TraffIQ is free for all road users. Track journeys, report incidents, and check live traffic — right from your phone.</p>
-          <div class="flex flex-wrap gap-3">
-            <a href="#" class="store-btn-light">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              <div><div style="font-size:10px;opacity:.7">Download on the</div><div style="font-size:14px;font-weight:800">App Store</div></div>
-            </a>
-            <a href="#" class="store-btn-light">
-              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white"><path d="M3.18 23.76c.31.17.67.19 1.01.07l11.9-6.93-2.54-2.54-10.37 9.4zm14.49-8.72L4.19.24C3.85.08 3.48.1 3.18.31L13.85 11l3.82 4.04zm3.07-5.34c-.37-.21-.85-.21-1.22 0L16.76 11l-2.97-2.97L4.19.24C4.53.1 4.9.14 5.21.31l15.04 8.73c.99.58.98 2.05-.01 2.66h.5z"/></svg>
-              <div><div style="font-size:10px;opacity:.7">GET IT ON</div><div style="font-size:14px;font-weight:800">Google Play</div></div>
-            </a>
-          </div>
+          <div class="eyebrow"><span class="dot"></span>Road intelligence built for East African journeys</div>
+          <h1>Know the road <span class="accent">ahead.</span></h1>
+          <p>TraffIQ brings destination search, real road routes, live community reports, journey tracking and sharing into one map-first experience that keeps working when connectivity gets unreliable.</p>
+          <div class="actions"><a class="cta signal" href="https://traffiqweb.tukutuku.org"><span class="material-symbols-rounded">near_me</span>Open TraffIQ Web</a><a class="cta ghost" href="#journey">See how it works</a></div>
+          <div class="micro"><span><span class="material-symbols-rounded">route</span>Road-based routes</span><span><span class="material-symbols-rounded">cloud_off</span>Resilient journeys</span><span><span class="material-symbols-rounded">share_location</span>Live sharing</span></div>
         </div>
-        <div class="flex justify-center lg:justify-end gap-4 items-end">
-          <div class="phone-frame" style="width:185px;transform:translateY(20px)">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="px-3 py-3">
-                <div class="text-xs font-bold text-brand mb-2">Safety Score</div>
-                <div class="flex items-baseline gap-1 mb-1"><span class="text-2xl font-extrabold text-brand">87</span><span class="text-xs text-gray-400">/ 100</span></div>
-                <div class="h-2 rounded-full bg-gray-100 mb-3"><div class="h-full rounded-full bg-lime" style="width:87%"></div></div>
-                <div class="text-xs text-gray-400 mb-1">Earnings this month</div>
-                <div class="text-lg font-extrabold text-brand mb-0.5">USh 456,600</div>
-                <div class="text-xs text-lime font-bold mb-3">+UGX 1,291 today</div>
-                <div class="flex items-end gap-1 h-10">
-                  <div class="flex-1 rounded-t bg-lime" style="height:40%"></div>
-                  <div class="flex-1 rounded-t bg-lime" style="height:60%"></div>
-                  <div class="flex-1 rounded-t bg-yellow-400" style="height:80%"></div>
-                  <div class="flex-1 rounded-t bg-lime" style="height:50%"></div>
-                  <div class="flex-1 rounded-t bg-lime" style="height:100%"></div>
-                  <div class="flex-1 rounded-t bg-lime" style="height:70%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="phone-frame" style="width:185px">
-            <div class="phone-notch"></div>
-            <div class="phone-screen">
-              <div class="px-3 py-3">
-                <div class="text-xs font-bold text-brand mb-3">Safety Alerts</div>
-                <div class="space-y-2">
-                  <div class="rounded-xl p-2" style="background:#fef3c7;border:1px solid #fde68a"><div class="text-xs font-bold text-yellow-800 mb-0.5">⚠ Sara Kimani</div><div class="text-xs text-yellow-700">Rider at 67km/h</div></div>
-                  <div class="rounded-xl p-2" style="background:#dcfce7;border:1px solid #86efac"><div class="text-xs font-bold text-green-800 mb-0.5">✓ JB Driver</div><div class="text-xs text-green-700">Trip completed safely</div></div>
-                  <div class="rounded-xl p-2" style="background:#fee2e2;border:1px solid #fca5a5"><div class="text-xs font-bold text-red-800 mb-0.5">🚨 David Obuya</div><div class="text-xs text-red-700">Emergency SOS</div></div>
-                  <div class="rounded-xl p-2 bg-purple-soft"><div class="text-xs font-bold text-purple-800 mb-0.5">📍 Alex Smith</div><div class="text-xs text-purple-700">Pothole reported</div></div>
-                </div>
-                <div class="mt-3 flex items-center gap-2 rounded-full px-3 py-2 bg-purple-soft">
-                  <span class="text-xs text-gray-400 flex-1">Send a message</span>
-                  <span class="text-xs text-lime">→</span>
-                </div>
-              </div>
-            </div>
+        <div class="product-preview" aria-label="Illustration of the TraffIQ web experience">
+          <div class="map-card"><div class="map-grid"></div><div class="road r1"></div><div class="road r2"></div><div class="road r3"></div><div class="route"></div>
+            <div class="searchbox"><span class="material-symbols-rounded">search</span><div><small style="display:block;color:#817986;font-size:10px">DESTINATION</small><b>Where are you going?</b></div></div>
+            <div class="status-float"><span class="material-symbols-rounded" style="color:#56a518">cloud_done</span>Location synced</div>
+            <div class="incident"><span class="material-symbols-rounded">car_crash</span></div>
+            <div class="route-card"><div class="overline">Route preview</div><h3>Gulu Main Market</h3><div class="metrics"><div class="metric"><small>ETA</small><strong>18 min</strong></div><div class="metric"><small>Distance</small><strong>7.4 km</strong></div><div class="metric"><small>Reports</small><strong>2 ahead</strong></div></div><a class="cta signal" style="width:100%;margin-top:13px" href="https://traffiqweb.tukutuku.org">Start journey</a></div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-
-<!-- ── Footer ────────────────────────────────────────────── -->
-<footer id="contact" class="pt-14 pb-8 bg-brand">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-10">
-      <div class="col-span-2 md:col-span-1">
-        <a href="#" class="flex items-center gap-2 mb-4 select-none">
-          <svg width="30" height="30" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="20" fill="#2d1850"/><path d="M50 10 L18 88 L35 88 L50 46 L65 88 L82 88 Z" fill="#76e000"/><rect x="35" y="62" width="30" height="11" rx="3" fill="#76e000"/></svg>
-          <span class="font-extrabold text-lg"><span class="text-white">TRAFF</span><span class="text-lime">IQ</span></span>
-        </a>
-        <p class="text-sm text-white/40 leading-relaxed mb-4">East Africa's crowdsourced road safety intelligence platform.</p>
-        <a href="mailto:hello@tukutuku.org" class="text-sm text-white/40 hover:text-white/70 transition-colors">✉ hello@tukutuku.org</a>
+    <section class="section" id="product"><div class="wrap"><div class="kicker">One road experience</div><h2 class="title">Plan, move, report and share without fighting the interface.</h2><p class="lead">TraffIQ keeps the important things visible while you travel and moves secondary detail out of the way.</p>
+      <div class="feature-grid">
+        <article class="feature"><div class="icon"><span class="material-symbols-rounded">search</span></div><h3>Find the real place</h3><p>Search nearby landmarks, roads and saved places with results biased to where you actually are.</p></article>
+        <article class="feature"><div class="icon"><span class="material-symbols-rounded">alt_route</span></div><h3>Follow a real route</h3><p>Preview a road route, ETA and route conditions before explicitly starting the journey.</p></article>
+        <article class="feature"><div class="icon"><span class="material-symbols-rounded">report</span></div><h3>Report in seconds</h3><p>Traffic, accidents, hazards, roadworks, closures and checkpoints are quick to capture and easy to dismiss.</p></article>
+        <article class="feature"><div class="icon"><span class="material-symbols-rounded">share_location</span></div><h3>Share the journey</h3><p>Give trusted people a live journey link with clear activity, recency and arrival status.</p></article>
       </div>
-      <div>
-        <h4 class="text-sm font-bold text-white mb-4">General</h4>
-        <ul class="space-y-3 text-sm text-white/45">
-          <li><a href="#features"   class="hover:text-white transition-colors">Professionals</a></li>
-          <li><a href="#facilities" class="hover:text-white transition-colors">Facilities</a></li>
-          <li><a href="#coverage"   class="hover:text-white transition-colors">Coverage</a></li>
-          <li><a href="#contact"    class="hover:text-white transition-colors">Contact</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-white mb-4">Support</h4>
-        <ul class="space-y-3 text-sm text-white/45">
-          <li><a href="#" class="hover:text-white transition-colors">FAQs</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Live chat</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Privacy Policy</a></li>
-          <li><a href="#" class="hover:text-white transition-colors">Terms of Service</a></li>
-        </ul>
-      </div>
-      <div>
-        <a href="https://traffiq.tukutuku.org" target="_blank" rel="noopener" class="btn-primary text-sm py-3 px-5 mb-6 w-full justify-center" style="padding:12px 20px;font-size:14px">
-          View Dashboard →
-        </a>
-        <div class="flex gap-3">
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
-          </a>
-          <a href="#" class="w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors" style="background:rgba(255,255,255,.08)">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/25" style="border-top:1px solid rgba(255,255,255,.07)">
-      <span>© 2025 Tukutuku Labs · TraffIQ</span>
-      <div class="flex gap-6">
-        <a href="#" class="hover:text-white/50 transition-colors">Cookie Policy</a>
-        <a href="#" class="hover:text-white/50 transition-colors">Terms &amp; Conditions</a>
-        <a href="#" class="hover:text-white/50 transition-colors">Privacy Policy</a>
-      </div>
-    </div>
-  </div>
-</footer>
+    </div></section>
 
-<script>
-  // Sticky nav
-  const nav = document.getElementById('nav');
-  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 10));
+    <section class="section soft" id="journey"><div class="wrap"><div class="kicker">Journey flow</div><h2 class="title">A destination-first flow with no surprise starts.</h2><p class="lead">Every transition is deliberate. The route appears before the journey starts, location/data loss is communicated calmly, and completion shows the full result immediately.</p>
+      <div class="flow">
+        <div class="step"><div class="step-num">01</div><span class="material-symbols-rounded">my_location</span><strong>Locate</strong><p>Resolve current position and nearby context.</p></div>
+        <div class="step"><div class="step-num">02</div><span class="material-symbols-rounded">search</span><strong>Search</strong><p>Choose a destination from nearby, recent or typed places.</p></div>
+        <div class="step"><div class="step-num">03</div><span class="material-symbols-rounded">route</span><strong>Preview</strong><p>See the actual road route, ETA and known conditions.</p></div>
+        <div class="step"><div class="step-num">04</div><span class="material-symbols-rounded">commute</span><strong>Choose mode</strong><p>Car, boda, taxi, bus, bike, walking or other.</p></div>
+        <div class="step"><div class="step-num">05</div><span class="material-symbols-rounded">play_arrow</span><strong>Start</strong><p>The journey begins only after your confirmation.</p></div>
+        <div class="step"><div class="step-num">06</div><span class="material-symbols-rounded">flag</span><strong>Finish</strong><p>Get the complete summary and share outcome immediately.</p></div>
+      </div>
+    </div></section>
 
-  // Mobile menu
-  const btn  = document.getElementById('menu-btn');
-  const menu = document.getElementById('mobile-menu');
-  btn.addEventListener('click', () => menu.classList.toggle('hidden'));
-  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu.classList.add('hidden')));
+    <section class="section" id="organisations"><div class="wrap"><div class="kicker">Beyond the individual trip</div><h2 class="title">The same road signals can power operations and evidence.</h2><div class="dual">
+      <article class="panel dark"><div class="label">For organisations</div><h3>Understand movement, safety and road conditions.</h3><p>TraffIQ can support transport operators, road-safety programmes, field teams and research partners with aggregated journey and incident intelligence while keeping the traveller experience simple.</p><div class="chips"><span class="chip">Transport operations</span><span class="chip">Road safety</span><span class="chip">Field mobility</span><span class="chip">Research & planning</span></div></article>
+      <article class="panel light" id="developers"><div class="label">For developers</div><h3>One first-party TraffIQ API layer.</h3><p>Web and mobile clients should consume the same TraffIQ backend for places, journeys, sharing, incidents and intelligence instead of embedding provider-specific behaviour in each client.</p><div class="chips"><span class="chip">Places</span><span class="chip">Journeys</span><span class="chip">Incidents</span><span class="chip">Sharing</span><span class="chip">Road intelligence</span></div></article>
+    </div></div></section>
 
-  // Scroll reveal
-  const ro = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => ro.observe(el));
+    <section class="section soft"><div class="wrap trust"><div><div class="kicker">Trust by design</div><h2 class="title">Clear states when the road, GPS or network gets messy.</h2><p class="lead">TraffIQ should never hide uncertainty. The interface tells a traveller whether data is live, cached, syncing, paused or offline without turning technical failure into panic.</p></div><div class="trust-list">
+      <div class="trust-item"><i><span class="material-symbols-rounded">offline_bolt</span></i><div><strong>Offline still means progress</strong><p>Active journeys can continue recording locally and sync when data returns.</p></div></div>
+      <div class="trust-item"><i><span class="material-symbols-rounded">location_off</span></i><div><strong>Location changes are visible</strong><p>When location is paused or weak, the journey stays explicit and the user knows what is happening.</p></div></div>
+      <div class="trust-item"><i><span class="material-symbols-rounded">verified_user</span></i><div><strong>User-controlled sharing</strong><p>Live links have clear duration, status and stop-sharing controls.</p></div></div>
+    </div></div></section>
 
-  // Counters
-  function countUp(el) {
-    const target = +el.dataset.target;
-    const t0 = performance.now(), dur = 1400;
-    (function step(now) {
-      const p = Math.min((now - t0) / dur, 1);
-      el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target).toLocaleString();
-      if (p < 1) requestAnimationFrame(step); else el.textContent = target.toLocaleString() + '+';
-    })(t0);
-  }
-  const co = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { countUp(e.target); co.unobserve(e.target); } });
-  }, { threshold: 0.5 });
-  document.querySelectorAll('.counter').forEach(el => co.observe(el));
-</script>
+    <section class="final"><div class="wrap"><div class="final-card"><div><h2>Ready to use the map?</h2><p>Open the TraffIQ web app and start with your destination.</p></div><div class="actions" style="position:relative;z-index:2"><a class="cta signal" href="https://traffiqweb.tukutuku.org">Open TraffIQ Web <span class="material-symbols-rounded">arrow_forward</span></a></div></div></div></section>
+  </main>
+
+  <footer class="footer"><div class="wrap footerin"><a class="brand" href="#top"><img src="./public/icon-mark.png" alt="" /><span>TRAFF<span style="color:#63b81e">IQ</span></span></a><div class="footerlinks"><a href="#product">Product</a><a href="#organisations">Organisations</a><a href="#developers">Developers</a><a href="https://traffiqweb.tukutuku.org">Web app</a></div></div></footer>
+
+  <script>
+    const menu=document.getElementById('menu');
+    menu?.addEventListener('click',()=>{document.querySelector('#product')?.scrollIntoView({behavior:'smooth'});});
+  </script>
 </body>
 </html>
