@@ -163,7 +163,7 @@ app.get('/v1/meta', (_req, res) => {
   res.json({
     apiVersion: 'v1',
     journeyModes: ['car','motorcycle','taxi','bus','truck','bicycle','walking','other'],
-    incidentTypes: ['accident','hazard','roadblock','police','traffic','road_damage','flooding','construction','closure','other'],
+    incidentTypes: ['accident','hazard','roadblock','police','traffic','road_damage','flooding','construction','closure','reckless_driving','other'],
     maxPointsPerBatch: 500,
     serverTime: new Date().toISOString()
   });
@@ -398,7 +398,7 @@ app.post('/v1/incidents', authenticate, asyncRoute(async (req, res) => {
   const body = parse(z.object({
     clientId: uuid,
     journeyId: uuid.optional(),
-    type: z.enum(['accident','hazard','roadblock','police','traffic','road_damage','flooding','construction','closure','other']),
+    type: z.enum(['accident','hazard','roadblock','police','traffic','road_damage','flooding','construction','closure','reckless_driving','other']),
     severity: z.enum(['low','medium','high','critical']).optional(),
     lat: z.number().min(-90).max(90),
     lng: z.number().min(-180).max(180),
