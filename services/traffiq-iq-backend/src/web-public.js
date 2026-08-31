@@ -9,6 +9,8 @@ const webType = value => {
     case 'traffic': return 'Traffic';
     case 'police': return 'Police';
     case 'accident': return 'Accident';
+    case 'reckless_driving': return 'Reckless driving';
+    case 'recklessdriving': return 'Reckless driving';
     case 'construction': return 'Roadwork';
     case 'closure': return 'Closure';
     default: return 'Hazard';
