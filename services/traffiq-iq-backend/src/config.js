@@ -21,6 +21,7 @@ export const config = {
   corsOrigins: (process.env.CORS_ORIGINS ?? '').split(',').map(v => v.trim()).filter(Boolean),
   publicApiBaseUrl: process.env.PUBLIC_API_BASE_URL ?? '',
   publicWebBaseUrl: process.env.PUBLIC_WEB_BASE_URL ?? '',
+  tukuAndroidRedirectUri: process.env.TUKU_ANDROID_REDIRECT_URI ?? 'traffiq://auth/tuku/callback',
   tukuCoreUrl: (process.env.TUKU_CORE_URL ?? 'https://core.tukutuku.org').replace(/\/$/, ''),
   routingBaseUrl: process.env.ROUTING_BASE_URL ?? 'https://router.project-osrm.org',
   geocodingBaseUrl: process.env.GEOCODING_BASE_URL ?? 'https://nominatim.openstreetmap.org',
