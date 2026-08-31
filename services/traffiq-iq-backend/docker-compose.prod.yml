@@ -1,11 +1,24 @@
+x-app-hardening: &app-hardening
+  security_opt:
+    - no-new-privileges:true
+  cap_drop: [ALL]
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
 services:
   api:
+    <<: *app-hardening
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
     env_file:
       - .env.production
+      - /opt/tuku/secrets/product-ai/traffiq.env
     environment:
       NODE_ENV: production
       PORT: 10000
@@ -16,10 +29,19 @@ services:
         condition: service_healthy
     expose:
       - "10000"
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:10000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - traffiq_internal
+      - tuku_bridge
 
   mobile:
+    <<: *app-hardening
     build:
       context: .
       dockerfile: Dockerfile
@@ -27,6 +49,7 @@ services:
     command: ["node", "src/mobile-server.js"]
     env_file:
       - .env.production
+      - /opt/tuku/secrets/product-ai/traffiq.env
     environment:
       NODE_ENV: production
       MOBILE_PORT: 10001
@@ -40,8 +63,16 @@ services:
       - "10001"
     volumes:
       - traffiq_media_data:/data/media
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:10001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - traffiq_internal
+      - tuku_bridge
 
   postgres:
     image: postgres:18-alpine
@@ -52,6 +83,15 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - traffiq_postgres_data:/var/lib/postgresql
+    mem_limit: 1536m
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
@@ -61,31 +101,13 @@ services:
     networks:
       - traffiq_internal
 
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      api:
-        condition: service_started
-      mobile:
-        condition: service_started
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./web:/srv/traffiq-web:ro
-      - traffiq_caddy_data:/data
-      - traffiq_caddy_config:/config
-    networks:
-      - traffiq_internal
-
 volumes:
   traffiq_postgres_data:
   traffiq_media_data:
-  traffiq_caddy_data:
-  traffiq_caddy_config:
 
 networks:
   traffiq_internal:
     driver: bridge
+  tuku_bridge:
+    external: true
+    name: tuku-bridge
