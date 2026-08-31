@@ -117,7 +117,7 @@ async function exchangeTukuAuthorization(input) {
     error.details = payload?.error ?? payload ?? null;
     throw error;
   }
-  if (payload.authorization?.clientId !== 'traffiq-web' || payload.authorization?.productCode !== 'traffiq') {
+  if (payload.authorization?.clientId !== input.clientId || payload.authorization?.productCode !== 'traffiq') {
     const error = new Error('tuku_sso_product_mismatch');
     error.status = 401;
     throw error;
@@ -229,13 +229,15 @@ app.get('/v1/meta', (_req, res) => {
 
 app.post('/v1/auth/tuku/exchange', asyncRoute(async (req, res) => {
   const body = parse(z.object({
-    clientId: z.literal('traffiq-web'),
+    clientId: z.enum(['traffiq-web','traffiq-android']),
     code: z.string().min(16).max(4096),
     codeVerifier: z.string().min(43).max(128),
     redirectUri: z.string().url(),
     device: deviceSchema.optional()
   }), req.body);
-  const expectedRedirect = `${config.publicWebBaseUrl}/auth/tuku/callback`;
+  const expectedRedirect = body.clientId === 'traffiq-android'
+    ? config.tukuAndroidRedirectUri
+    : `${config.publicWebBaseUrl}/auth/tuku/callback`;
   if (body.redirectUri !== expectedRedirect) return res.status(400).json({ error: 'invalid_redirect_uri' });
   const tuku = await exchangeTukuAuthorization(body);
   const user = await mapTukuIdentity(tuku.identity);
