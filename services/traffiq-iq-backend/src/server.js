@@ -98,6 +98,64 @@ async function authResponse(user, device = null) {
   };
 }
 
+async function exchangeTukuAuthorization(input) {
+  const response = await fetch(`${config.tukuCoreUrl}/api/v1/sso/exchange`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({
+      clientId: input.clientId,
+      code: input.code,
+      redirectUri: input.redirectUri,
+      codeVerifier: input.codeVerifier
+    }),
+    signal: AbortSignal.timeout(15_000)
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.authenticated || !payload?.identity?.coreUserId || !payload?.identity?.email) {
+    const error = new Error(payload?.message || payload?.error?.message || 'tuku_sso_exchange_failed');
+    error.status = response.status >= 400 && response.status < 500 ? response.status : 502;
+    error.details = payload?.error ?? payload ?? null;
+    throw error;
+  }
+  if (payload.authorization?.clientId !== 'traffiq-web' || payload.authorization?.productCode !== 'traffiq') {
+    const error = new Error('tuku_sso_product_mismatch');
+    error.status = 401;
+    throw error;
+  }
+  return payload;
+}
+
+async function mapTukuIdentity(identity) {
+  const coreUserId = String(identity.coreUserId);
+  const email = normalizeEmail(String(identity.email));
+  let existing = await query('SELECT * FROM users WHERE core_user_id=$1 LIMIT 1', [coreUserId]);
+  if (existing.rowCount) {
+    const row = existing.rows[0];
+    if (row.email !== email) {
+      const conflict = await query('SELECT id,core_user_id FROM users WHERE email=$1 AND id<>$2 LIMIT 1', [email, row.id]);
+      if (conflict.rowCount) { const error = new Error('tuku_identity_email_conflict'); error.status = 409; throw error; }
+      existing = await query('UPDATE users SET email=$2,phone=COALESCE($3,phone),updated_at=now() WHERE id=$1 RETURNING *', [row.id,email,identity.phone||null]);
+    }
+    return existing.rows[0];
+  }
+
+  const byEmail = await query('SELECT * FROM users WHERE email=$1 LIMIT 1', [email]);
+  if (byEmail.rowCount) {
+    const row = byEmail.rows[0];
+    if (row.core_user_id && String(row.core_user_id) !== coreUserId) { const error = new Error('tuku_identity_already_linked'); error.status = 409; throw error; }
+    const linked = await query('UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),updated_at=now() WHERE id=$1 RETURNING *', [row.id,coreUserId,identity.phone||null]);
+    return linked.rows[0];
+  }
+
+  const disabledPassword = await hashPassword(randomBytes(48).toString('base64url'));
+  const defaultName = email.split('@')[0] || 'TraffIQ user';
+  const created = await query(
+    `INSERT INTO users(email,phone,display_name,password_hash,core_user_id) VALUES($1,$2,$3,$4,$5) RETURNING *`,
+    [email, identity.phone || null, defaultName, disabledPassword, coreUserId]
+  );
+  return created.rows[0];
+}
+
 async function ownedJourney(userId, journeyId) {
   const result = await query('SELECT * FROM journeys WHERE id = $1 AND user_id = $2', [journeyId, userId]);
   if (!result.rowCount) {
@@ -168,6 +226,22 @@ app.get('/v1/meta', (_req, res) => {
     serverTime: new Date().toISOString()
   });
 });
+
+app.post('/v1/auth/tuku/exchange', asyncRoute(async (req, res) => {
+  const body = parse(z.object({
+    clientId: z.literal('traffiq-web'),
+    code: z.string().min(16).max(4096),
+    codeVerifier: z.string().min(43).max(128),
+    redirectUri: z.string().url(),
+    device: deviceSchema.optional()
+  }), req.body);
+  const expectedRedirect = `${config.publicWebBaseUrl}/auth/tuku/callback`;
+  if (body.redirectUri !== expectedRedirect) return res.status(400).json({ error: 'invalid_redirect_uri' });
+  const tuku = await exchangeTukuAuthorization(body);
+  const user = await mapTukuIdentity(tuku.identity);
+  const session = await authResponse(user, body.device);
+  res.json({ ...session, coreUserId: tuku.identity.coreUserId, authorization: tuku.authorization });
+}));
 
 app.post('/v1/auth/register', asyncRoute(async (req, res) => {
   const body = parse(z.object({
