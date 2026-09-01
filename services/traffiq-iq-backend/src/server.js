@@ -11,9 +11,7 @@ import {
   issueAccessToken,
   issueRefreshToken,
   normalizeEmail,
-  passwordHashNeedsUpgrade,
   sha256,
-  verifyPassword
 } from './auth.js';
 import { previewRoute, searchPlaces } from './geo.js';
 import { runMigrations } from '../scripts/migrate.js';
@@ -125,17 +123,56 @@ async function exchangeTukuAuthorization(input) {
   return payload;
 }
 
+async function callTukuAuth(path, body, accessToken = null) {
+  const headers = { 'content-type': 'application/json', accept: 'application/json' };
+  if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+  let response;
+  try {
+    response = await fetch(`${config.tukuCoreUrl}/api/v1/auth/${path}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15_000)
+    });
+  } catch (cause) {
+    const error = new Error('tuku_auth_unavailable');
+    error.status = 503;
+    error.details = { cause: cause instanceof Error ? cause.message : String(cause) };
+    throw error;
+  }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(payload?.error?.code || payload?.code || `tuku_auth_${response.status}`);
+    error.status = response.status >= 400 && response.status < 500 ? response.status : 502;
+    error.details = payload?.error ?? payload ?? null;
+    throw error;
+  }
+  return payload?.data ?? payload;
+}
+
+async function revokeTukuAuthSession(session) {
+  const accessToken = session?.accessToken;
+  if (!accessToken) return;
+  await callTukuAuth('logout', { allDevices: false }, accessToken).catch(() => undefined);
+}
+
 async function mapTukuIdentity(identity) {
   const coreUserId = String(identity.coreUserId);
   const email = normalizeEmail(String(identity.email));
+  const displayName = String(identity.displayName || '').trim() || email.split('@')[0] || 'TraffIQ user';
+  const phone = identity.phone ? String(identity.phone).trim() : null;
   let existing = await query('SELECT * FROM users WHERE core_user_id=$1 LIMIT 1', [coreUserId]);
   if (existing.rowCount) {
     const row = existing.rows[0];
     if (row.email !== email) {
       const conflict = await query('SELECT id,core_user_id FROM users WHERE email=$1 AND id<>$2 LIMIT 1', [email, row.id]);
       if (conflict.rowCount) { const error = new Error('tuku_identity_email_conflict'); error.status = 409; throw error; }
-      existing = await query('UPDATE users SET email=$2,phone=COALESCE($3,phone),updated_at=now() WHERE id=$1 RETURNING *', [row.id,email,identity.phone||null]);
     }
+    existing = await query(
+      `UPDATE users SET email=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+       WHERE id=$1 RETURNING *`,
+      [row.id,email,phone,displayName]
+    );
     return existing.rows[0];
   }
 
@@ -143,17 +180,40 @@ async function mapTukuIdentity(identity) {
   if (byEmail.rowCount) {
     const row = byEmail.rows[0];
     if (row.core_user_id && String(row.core_user_id) !== coreUserId) { const error = new Error('tuku_identity_already_linked'); error.status = 409; throw error; }
-    const linked = await query('UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),updated_at=now() WHERE id=$1 RETURNING *', [row.id,coreUserId,identity.phone||null]);
+    const linked = await query(
+      `UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+       WHERE id=$1 RETURNING *`,
+      [row.id,coreUserId,phone,displayName]
+    );
     return linked.rows[0];
   }
 
   const disabledPassword = await hashPassword(randomBytes(48).toString('base64url'));
-  const defaultName = email.split('@')[0] || 'TraffIQ user';
   const created = await query(
     `INSERT INTO users(email,phone,display_name,password_hash,core_user_id) VALUES($1,$2,$3,$4,$5) RETURNING *`,
-    [email, identity.phone || null, defaultName, disabledPassword, coreUserId]
+    [email, phone, displayName, disabledPassword, coreUserId]
   );
   return created.rows[0];
+}
+
+async function productSessionFromTukuAuth(payload, device) {
+  const identity = payload?.user;
+  if (!identity?.coreUserId || !identity?.email || !payload?.session?.accessToken) {
+    const error = new Error('tuku_auth_invalid_response');
+    error.status = 502;
+    throw error;
+  }
+  try {
+    const user = await mapTukuIdentity(identity);
+    const session = await authResponse(user, device);
+    return {
+      ...session,
+      coreUserId: identity.coreUserId,
+      identityProvider: 'tuku'
+    };
+  } finally {
+    await revokeTukuAuthSession(payload.session);
+  }
 }
 
 async function ownedJourney(userId, journeyId) {
@@ -248,43 +308,54 @@ app.post('/v1/auth/tuku/exchange', asyncRoute(async (req, res) => {
 app.post('/v1/auth/register', asyncRoute(async (req, res) => {
   const body = parse(z.object({
     email: z.string().email(),
-    password: z.string().min(8).max(200),
+    password: z.string().min(8).max(128),
     displayName: z.string().trim().min(2).max(120),
-    phone: z.string().trim().min(7).max(30).optional(),
+    country: z.string().trim().length(2).optional(),
+    language: z.string().trim().min(2).max(12).optional(),
     device: deviceSchema.optional()
   }), req.body);
-  const email = normalizeEmail(body.email);
-  const passwordHash = await hashPassword(body.password);
-  try {
-    const created = await query(
-      `INSERT INTO users (email, phone, display_name, password_hash)
-       VALUES ($1,$2,$3,$4)
-       RETURNING id, email, display_name`,
-      [email, body.phone ?? null, body.displayName, passwordHash]
-    );
-    res.status(201).json(await authResponse(created.rows[0], body.device));
-  } catch (error) {
-    if (error.code === '23505') return res.status(409).json({ error: 'account_exists' });
-    throw error;
-  }
+  const tuku = await callTukuAuth('register', {
+    email: normalizeEmail(body.email),
+    password: body.password,
+    name: body.displayName,
+    country: (body.country || 'UG').toUpperCase(),
+    language: body.language || 'en',
+    consent: true,
+    intent: 'exploring'
+  });
+  res.status(201).json(await productSessionFromTukuAuth(tuku, body.device));
 }));
 
 app.post('/v1/auth/login', asyncRoute(async (req, res) => {
   const body = parse(z.object({
     email: z.string().email(),
-    password: z.string().min(1).max(200),
+    password: z.string().min(1).max(128),
     device: deviceSchema.optional()
   }), req.body);
-  const result = await query('SELECT * FROM users WHERE email = $1 AND status = $2', [normalizeEmail(body.email), 'active']);
-  const user = result.rows[0];
-  if (!user || !(await verifyPassword(body.password, user.password_hash))) {
-    return res.status(401).json({ error: 'invalid_credentials' });
-  }
-  if (passwordHashNeedsUpgrade(user.password_hash)) {
-    const upgradedHash = await hashPassword(body.password);
-    await query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [upgradedHash, user.id]);
-  }
-  res.json(await authResponse(user, body.device));
+  const tuku = await callTukuAuth('login', {
+    email: normalizeEmail(body.email),
+    password: body.password
+  });
+  res.json(await productSessionFromTukuAuth(tuku, body.device));
+}));
+
+app.post('/v1/auth/password-reset', asyncRoute(async (req, res) => {
+  const body = parse(z.object({ email: z.string().email() }), req.body);
+  await callTukuAuth('forgot-password', {
+    channel: 'email',
+    identifier: normalizeEmail(body.email),
+    redirectTo: 'traffiq://auth/reset-password'
+  });
+  res.status(202).json({ accepted: true });
+}));
+
+app.post('/v1/auth/password-reset/confirm', asyncRoute(async (req, res) => {
+  const body = parse(z.object({
+    recoveryToken: z.string().min(20).max(8192),
+    password: z.string().min(8).max(128)
+  }), req.body);
+  await callTukuAuth('reset-password', body);
+  res.json({ completed: true });
 }));
 
 app.post('/v1/auth/refresh', asyncRoute(async (req, res) => {
