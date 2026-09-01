@@ -18,6 +18,7 @@ services:
       - "10000"
     networks:
       - traffiq_internal
+      - tuku_core
 
   mobile:
     build:
@@ -42,6 +43,7 @@ services:
       - traffiq_media_data:/data/media
     networks:
       - traffiq_internal
+      - tuku_core
 
   postgres:
     image: postgres:18-alpine
@@ -89,3 +91,6 @@ volumes:
 networks:
   traffiq_internal:
     driver: bridge
+  tuku_core:
+    external: true
+    name: tuku-bridge
