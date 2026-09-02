@@ -108,11 +108,12 @@ async function exchangeTukuAuthorization(input) {
     }),
     signal: AbortSignal.timeout(15_000)
   });
-  const payload = await response.json().catch(() => null);
+  const envelope = await response.json().catch(() => null);
+  const payload = envelope?.data ?? envelope;
   if (!response.ok || !payload?.authenticated || !payload?.identity?.coreUserId || !payload?.identity?.email) {
-    const error = new Error(payload?.message || payload?.error?.message || 'tuku_sso_exchange_failed');
+    const error = new Error(payload?.message || envelope?.error?.message || 'tuku_sso_exchange_failed');
     error.status = response.status >= 400 && response.status < 500 ? response.status : 502;
-    error.details = payload?.error ?? payload ?? null;
+    error.details = envelope?.error ?? payload ?? envelope ?? null;
     throw error;
   }
   if (payload.authorization?.clientId !== input.clientId || payload.authorization?.productCode !== 'traffiq') {
@@ -344,7 +345,9 @@ app.post('/v1/auth/password-reset', asyncRoute(async (req, res) => {
   await callTukuAuth('forgot-password', {
     channel: 'email',
     identifier: normalizeEmail(body.email),
-    redirectTo: 'traffiq://auth/reset-password'
+    redirectTo: req.headers['x-traffiq-platform'] === 'web'
+      ? `${config.publicWebBaseUrl.replace(/\/$/, '')}/login?reset_password=1`
+      : 'traffiq://auth/reset-password'
   });
   res.status(202).json({ accepted: true });
 }));
@@ -352,10 +355,15 @@ app.post('/v1/auth/password-reset', asyncRoute(async (req, res) => {
 app.post('/v1/auth/password-reset/confirm', asyncRoute(async (req, res) => {
   const body = parse(z.object({
     recoveryToken: z.string().min(20).max(8192),
-    password: z.string().min(8).max(128)
+    password: z.string().min(8).max(128),
+    device: deviceSchema.optional()
   }), req.body);
-  await callTukuAuth('reset-password', body);
-  res.json({ completed: true });
+  const tuku = await callTukuAuth('reset-password', {
+    recoveryToken: body.recoveryToken,
+    password: body.password
+  });
+  const productSession = await productSessionFromTukuAuth(tuku, body.device);
+  res.json({ completed: true, ...productSession });
 }));
 
 app.post('/v1/auth/refresh', asyncRoute(async (req, res) => {
