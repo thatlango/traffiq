@@ -8,6 +8,20 @@
   PNPM_VERSION          = "10"
   VITE_GOOGLE_CLIENT_ID = "32567639469-1aoo120bq9pj1cnh3hutjknc5tuipqs0.apps.googleusercontent.com"
 
+# Shared-journey links are public tracking links, not marketing routes.
+# Keep both current /share/:token and legacy /trip/:token working.
+[[redirects]]
+  from   = "/share/*"
+  to     = "https://traffiqweb.tukutuku.org/share/:splat"
+  status = 302
+  force  = true
+
+[[redirects]]
+  from   = "/trip/*"
+  to     = "https://traffiqweb.tukutuku.org/share/:splat"
+  status = 302
+  force  = true
+
 # Proxy /api/* to the TraffIQ API server on Replit (server-side, no CORS issues)
 [[redirects]]
   from   = "/api/*"
