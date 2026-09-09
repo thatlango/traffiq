@@ -19,6 +19,13 @@ api.traffiq.tukutuku.org {
 
 traffiq.tukutuku.org {
   encode zstd gzip
+
+  @sharedJourney path /share/*
+  redir @sharedJourney https://traffiqweb.tukutuku.org{uri} 302
+
+  @legacyTrip path_regexp legacyTrip ^/trip/(.*)$
+  redir @legacyTrip https://traffiqweb.tukutuku.org/share/{re.legacyTrip.1} 302
+
   root * /srv/traffiq-web
   try_files {path} /index.html
   file_server
