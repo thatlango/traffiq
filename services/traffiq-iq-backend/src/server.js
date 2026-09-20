@@ -157,11 +157,14 @@ async function revokeTukuAuthSession(session) {
   await callTukuAuth('logout', { allDevices: false }, accessToken).catch(() => undefined);
 }
 
-async function mapTukuIdentity(identity) {
+async function mapTukuIdentity(identity, productSession = null) {
   const coreUserId = String(identity.coreUserId);
   const email = normalizeEmail(String(identity.email));
   const displayName = String(identity.displayName || '').trim() || email.split('@')[0] || 'TraffIQ user';
   const phone = identity.phone ? String(identity.phone).trim() : null;
+  const avatarUrl = identity.avatarUrl ? String(identity.avatarUrl).trim() : null;
+  const coreSession = productSession?.accessToken ? String(productSession.accessToken) : null;
+  const coreSessionExpiresAt = productSession?.expiresAt ? new Date(Number(productSession.expiresAt)*1000) : null;
   let existing = await query('SELECT * FROM users WHERE core_user_id=$1 LIMIT 1', [coreUserId]);
   if (existing.rowCount) {
     const row = existing.rows[0];
@@ -170,9 +173,11 @@ async function mapTukuIdentity(identity) {
       if (conflict.rowCount) { const error = new Error('tuku_identity_email_conflict'); error.status = 409; throw error; }
     }
     existing = await query(
-      `UPDATE users SET email=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+      `UPDATE users SET email=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),
+         avatar_url=COALESCE($5,avatar_url),core_product_session=COALESCE($6,core_product_session),
+         core_product_session_expires_at=COALESCE($7,core_product_session_expires_at),updated_at=now()
        WHERE id=$1 RETURNING *`,
-      [row.id,email,phone,displayName]
+      [row.id,email,phone,displayName,avatarUrl,coreSession,coreSessionExpiresAt]
     );
     return existing.rows[0];
   }
@@ -182,17 +187,20 @@ async function mapTukuIdentity(identity) {
     const row = byEmail.rows[0];
     if (row.core_user_id && String(row.core_user_id) !== coreUserId) { const error = new Error('tuku_identity_already_linked'); error.status = 409; throw error; }
     const linked = await query(
-      `UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+      `UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),
+         avatar_url=COALESCE($5,avatar_url),core_product_session=COALESCE($6,core_product_session),
+         core_product_session_expires_at=COALESCE($7,core_product_session_expires_at),updated_at=now()
        WHERE id=$1 RETURNING *`,
-      [row.id,coreUserId,phone,displayName]
+      [row.id,coreUserId,phone,displayName,avatarUrl,coreSession,coreSessionExpiresAt]
     );
     return linked.rows[0];
   }
 
   const disabledPassword = await hashPassword(randomBytes(48).toString('base64url'));
   const created = await query(
-    `INSERT INTO users(email,phone,display_name,password_hash,core_user_id) VALUES($1,$2,$3,$4,$5) RETURNING *`,
-    [email, phone, displayName, disabledPassword, coreUserId]
+    `INSERT INTO users(email,phone,display_name,password_hash,core_user_id,avatar_url,core_product_session,core_product_session_expires_at)
+     VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+    [email, phone, displayName, disabledPassword, coreUserId, avatarUrl, coreSession, coreSessionExpiresAt]
   );
   return created.rows[0];
 }
@@ -205,7 +213,7 @@ async function productSessionFromTukuAuth(payload, device) {
     throw error;
   }
   try {
-    const user = await mapTukuIdentity(identity);
+    const user = await mapTukuIdentity(identity, payload.productSession);
     const session = await authResponse(user, device);
     return {
       ...session,
