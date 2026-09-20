@@ -142,10 +142,16 @@ export function registerMobileCompatibility(app) {
   } catch(e){next(e);} });
   app.patch('/v1/me', authenticate, async (req,res,next) => { try {
     const b=req.body||{};
-    const r=await query(`UPDATE users SET display_name=COALESCE($2,display_name),phone=COALESCE($3,phone),city=COALESCE($4,city),preferences=COALESCE($5::jsonb,preferences),avatar_url=COALESCE($6,avatar_url),updated_at=now() WHERE id=$1 RETURNING *`,[req.user.id,b.display_name||b.full_name||null,b.phone||null,b.city||null,b.preferences?JSON.stringify(b.preferences):null,b.avatar_path||null]);
+    const current=await query('SELECT core_user_id FROM users WHERE id=$1 LIMIT 1',[req.user.id]);
+    if(current.rows[0]?.core_user_id && (b.avatar_path||b.avatar_url)) return fail(res,409,'shared_profile_managed_by_core','Profile pictures are shared through your Tuku identity. Update the picture from a Core-enabled profile surface.');
+    const r=await query(`UPDATE users SET display_name=COALESCE($2,display_name),phone=COALESCE($3,phone),city=COALESCE($4,city),preferences=COALESCE($5::jsonb,preferences),avatar_url=COALESCE($6,avatar_url),updated_at=now() WHERE id=$1 RETURNING *`,[req.user.id,b.display_name||b.full_name||null,b.phone||null,b.city||null,b.preferences?JSON.stringify(b.preferences):null,b.avatar_path||b.avatar_url||null]);
     const u=r.rows[0]; ok(res,{id:u.id,display_name:u.display_name,full_name:u.display_name,avatar_url:u.avatar_url,email:u.email,phone:u.phone,city:u.city,preferences:u.preferences||{}});
   } catch(e){next(e);} });
-  app.delete('/v1/me/avatar', authenticate, async (req,res,next)=>{try{await query('UPDATE users SET avatar_url=NULL,updated_at=now() WHERE id=$1',[req.user.id]);ok(res,{removed:true});}catch(e){next(e);}});
+  app.delete('/v1/me/avatar', authenticate, async (req,res,next)=>{try{
+    const current=await query('SELECT core_user_id FROM users WHERE id=$1 LIMIT 1',[req.user.id]);
+    if(current.rows[0]?.core_user_id) return fail(res,409,'shared_profile_managed_by_core','Profile pictures are shared through your Tuku identity.');
+    await query('UPDATE users SET avatar_url=NULL,updated_at=now() WHERE id=$1',[req.user.id]);ok(res,{removed:true});
+  }catch(e){next(e);}});
 
   app.get('/v1/saved-places', authenticate, async(req,res,next)=>{try{const r=await query('SELECT * FROM saved_places WHERE user_id=$1 ORDER BY updated_at DESC',[req.user.id]);ok(res,r.rows.map(p=>({id:p.id,name:p.label,category:p.kind,formatted_address:p.formatted_address,latitude:p.lat,longitude:p.lng,provider_place_id:p.provider_place_id,is_favorite:p.is_favorite,is_suggested:p.is_suggested})));}catch(e){next(e);}});
   app.post('/v1/saved-places', authenticate, async(req,res,next)=>{try{const b=req.body||{};const r=await query(`INSERT INTO saved_places(user_id,label,kind,formatted_address,lat,lng,provider_place_id,is_favorite,is_suggested,source) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,[req.user.id,b.label,b.kind||'custom',b.formatted_address||null,b.lat,b.lng,b.provider_place_id||null,!!b.is_favorite,!!b.is_suggested,b.source||'manual']);const p=r.rows[0];ok(res,{id:p.id,name:p.label,category:p.kind,formatted_address:p.formatted_address,latitude:p.lat,longitude:p.lng,provider_place_id:p.provider_place_id,is_favorite:p.is_favorite,is_suggested:p.is_suggested},201);}catch(e){next(e);}});
