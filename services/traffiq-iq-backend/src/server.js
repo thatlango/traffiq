@@ -87,7 +87,7 @@ async function authResponse(user, device = null) {
   const accessToken = await issueAccessToken(user);
   const refresh = await issueRefreshToken(user.id, dbDevice?.id ?? null);
   return {
-    user: { id: user.id, email: user.email, displayName: user.display_name },
+    user: { id: user.id, email: user.email, displayName: user.display_name, phone: user.phone ?? null, avatarUrl: user.avatar_url ?? null },
     device: dbDevice,
     accessToken,
     accessTokenExpiresInSeconds: config.accessTokenMinutes * 60,
@@ -162,6 +162,7 @@ async function mapTukuIdentity(identity) {
   const email = normalizeEmail(String(identity.email));
   const displayName = String(identity.displayName || '').trim() || email.split('@')[0] || 'TraffIQ user';
   const phone = identity.phone ? String(identity.phone).trim() : null;
+  const avatarUrl = identity.avatarUrl ? String(identity.avatarUrl) : null;
   let existing = await query('SELECT * FROM users WHERE core_user_id=$1 LIMIT 1', [coreUserId]);
   if (existing.rowCount) {
     const row = existing.rows[0];
@@ -170,9 +171,9 @@ async function mapTukuIdentity(identity) {
       if (conflict.rowCount) { const error = new Error('tuku_identity_email_conflict'); error.status = 409; throw error; }
     }
     existing = await query(
-      `UPDATE users SET email=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+      `UPDATE users SET email=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),avatar_url=$5,updated_at=now()
        WHERE id=$1 RETURNING *`,
-      [row.id,email,phone,displayName]
+      [row.id,email,phone,displayName,avatarUrl]
     );
     return existing.rows[0];
   }
@@ -182,17 +183,17 @@ async function mapTukuIdentity(identity) {
     const row = byEmail.rows[0];
     if (row.core_user_id && String(row.core_user_id) !== coreUserId) { const error = new Error('tuku_identity_already_linked'); error.status = 409; throw error; }
     const linked = await query(
-      `UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),updated_at=now()
+      `UPDATE users SET core_user_id=$2,phone=COALESCE($3,phone),display_name=COALESCE(NULLIF($4,''),display_name),avatar_url=$5,updated_at=now()
        WHERE id=$1 RETURNING *`,
-      [row.id,coreUserId,phone,displayName]
+      [row.id,coreUserId,phone,displayName,avatarUrl]
     );
     return linked.rows[0];
   }
 
   const disabledPassword = await hashPassword(randomBytes(48).toString('base64url'));
   const created = await query(
-    `INSERT INTO users(email,phone,display_name,password_hash,core_user_id) VALUES($1,$2,$3,$4,$5) RETURNING *`,
-    [email, phone, displayName, disabledPassword, coreUserId]
+    `INSERT INTO users(email,phone,display_name,password_hash,core_user_id,avatar_url) VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,
+    [email, phone, displayName, disabledPassword, coreUserId, avatarUrl]
   );
   return created.rows[0];
 }
