@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { authenticate, hashPassword, issueAccessToken, issueRefreshToken, normalizeEmail, sha256 } from './auth.js';
 import { query, transaction } from './db.js';
 import { config } from './config.js';
+import { syncCanonicalProfile } from './core-profile.js';
 
 const ok = (res, data, status = 200) => res.status(status).json({ data, error: null });
 const fail = (res, status, code, message, details = null) => res.status(status).json({ data: null, error: { code, message, details } });
@@ -142,10 +143,43 @@ export function registerMobileCompatibility(app) {
   } catch(e){next(e);} });
   app.patch('/v1/me', authenticate, async (req,res,next) => { try {
     const b=req.body||{};
-    const r=await query(`UPDATE users SET display_name=COALESCE($2,display_name),phone=COALESCE($3,phone),city=COALESCE($4,city),preferences=COALESCE($5::jsonb,preferences),avatar_url=COALESCE($6,avatar_url),updated_at=now() WHERE id=$1 RETURNING *`,[req.user.id,b.display_name||b.full_name||null,b.phone||null,b.city||null,b.preferences?JSON.stringify(b.preferences):null,b.avatar_path||null]);
+    const current=(await query('SELECT * FROM users WHERE id=$1 LIMIT 1',[req.user.id])).rows[0];
+    if(!current) return fail(res,404,'not_found','Profile not found');
+    const displayName=b.display_name??b.full_name;
+    const phone=b.phone;
+    const hasAvatar=Object.prototype.hasOwnProperty.call(b,'avatar_url')||Object.prototype.hasOwnProperty.call(b,'avatar_path');
+    const avatarUrl=Object.prototype.hasOwnProperty.call(b,'avatar_url')?b.avatar_url:b.avatar_path;
+    if(avatarUrl!==undefined&&avatarUrl!==null){
+      if(typeof avatarUrl!=='string'||avatarUrl.length>350000||(!/^data:image\/(?:png|jpeg|webp);base64,/.test(avatarUrl)&&!/^https?:\/\//i.test(avatarUrl))){
+        return fail(res,400,'validation_error','Profile image must be a PNG, JPEG, WebP data image or HTTPS URL');
+      }
+    }
+    if(current.core_user_id&&(displayName!==undefined||phone!==undefined||hasAvatar)){
+      await syncCanonicalProfile(String(current.core_user_id),{
+        ...(displayName!==undefined?{displayName:String(displayName).trim()}:{}),
+        ...(phone!==undefined?{phone:phone?String(phone).trim():null}:{}),
+        ...(hasAvatar?{avatarUrl:avatarUrl??null}:{}),
+      });
+    }
+    const r=await query(`UPDATE users SET
+      display_name=CASE WHEN $2::text IS NULL THEN display_name ELSE $2 END,
+      phone=CASE WHEN $3::text IS NULL THEN phone ELSE $3 END,
+      city=COALESCE($4,city),
+      preferences=COALESCE($5::jsonb,preferences),
+      avatar_url=CASE WHEN $6::boolean THEN $7 ELSE avatar_url END,
+      updated_at=now()
+      WHERE id=$1 RETURNING *`,[
+        req.user.id,displayName===undefined?null:String(displayName).trim(),phone===undefined?null:(phone?String(phone).trim():null),
+        b.city??null,b.preferences?JSON.stringify(b.preferences):null,hasAvatar,avatarUrl??null
+      ]);
     const u=r.rows[0]; ok(res,{id:u.id,display_name:u.display_name,full_name:u.display_name,avatar_url:u.avatar_url,email:u.email,phone:u.phone,city:u.city,preferences:u.preferences||{}});
   } catch(e){next(e);} });
-  app.delete('/v1/me/avatar', authenticate, async (req,res,next)=>{try{await query('UPDATE users SET avatar_url=NULL,updated_at=now() WHERE id=$1',[req.user.id]);ok(res,{removed:true});}catch(e){next(e);}});
+  app.delete('/v1/me/avatar', authenticate, async (req,res,next)=>{try{
+    const current=(await query('SELECT core_user_id FROM users WHERE id=$1 LIMIT 1',[req.user.id])).rows[0];
+    if(current?.core_user_id) await syncCanonicalProfile(String(current.core_user_id),{avatarUrl:null});
+    await query('UPDATE users SET avatar_url=NULL,updated_at=now() WHERE id=$1',[req.user.id]);
+    ok(res,{removed:true});
+  }catch(e){next(e);}});
 
   app.get('/v1/saved-places', authenticate, async(req,res,next)=>{try{const r=await query('SELECT * FROM saved_places WHERE user_id=$1 ORDER BY updated_at DESC',[req.user.id]);ok(res,r.rows.map(p=>({id:p.id,name:p.label,category:p.kind,formatted_address:p.formatted_address,latitude:p.lat,longitude:p.lng,provider_place_id:p.provider_place_id,is_favorite:p.is_favorite,is_suggested:p.is_suggested})));}catch(e){next(e);}});
   app.post('/v1/saved-places', authenticate, async(req,res,next)=>{try{const b=req.body||{};const r=await query(`INSERT INTO saved_places(user_id,label,kind,formatted_address,lat,lng,provider_place_id,is_favorite,is_suggested,source) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,[req.user.id,b.label,b.kind||'custom',b.formatted_address||null,b.lat,b.lng,b.provider_place_id||null,!!b.is_favorite,!!b.is_suggested,b.source||'manual']);const p=r.rows[0];ok(res,{id:p.id,name:p.label,category:p.kind,formatted_address:p.formatted_address,latitude:p.lat,longitude:p.lng,provider_place_id:p.provider_place_id,is_favorite:p.is_favorite,is_suggested:p.is_suggested},201);}catch(e){next(e);}});
