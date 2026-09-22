@@ -15,6 +15,7 @@ import {
 } from './auth.js';
 import { previewRoute, searchPlaces } from './geo.js';
 import { runMigrations } from '../scripts/migrate.js';
+import { assertWorldReadKey, loadTraffiqWorldBatch } from './world-export.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -273,6 +274,15 @@ async function recomputeJourneyStats(journeyId) {
   );
   return updated.rows[0];
 }
+
+app.get('/internal/world-export', asyncRoute(async (req, res) => {
+  assertWorldReadKey(req.headers['x-tuku-world-read-key']);
+  const params = parse(z.object({
+    cursor: z.string().max(2048).optional(),
+    limit: z.coerce.number().int().min(1).max(1000).optional()
+  }), req.query);
+  res.json(await loadTraffiqWorldBatch(params));
+}));
 
 app.get('/health', asyncRoute(async (_req, res) => {
   const dbTime = await checkDatabase();
