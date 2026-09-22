@@ -24,6 +24,7 @@ export const config = {
   tukuAndroidRedirectUri: process.env.TUKU_ANDROID_REDIRECT_URI ?? 'traffiq://auth/tuku/callback',
   tukuCoreUrl: (process.env.TUKU_CORE_INTERNAL_URL ?? process.env.TUKU_CORE_URL ?? 'https://core.tukutuku.org').replace(/\/$/, ''),
   tukuProfileSyncKey: process.env.TUKU_PROFILE_SYNC_KEY ?? '',
+  worldReadKey: process.env.TUKU_WORLD_READ_KEY ?? '',
   routingBaseUrl: process.env.ROUTING_BASE_URL ?? 'https://router.project-osrm.org',
   geocodingBaseUrl: process.env.GEOCODING_BASE_URL ?? 'https://nominatim.openstreetmap.org',
   geocodingUserAgent: process.env.GEOCODING_USER_AGENT ?? 'TraffIQ/1.0',
