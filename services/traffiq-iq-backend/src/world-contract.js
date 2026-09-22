@@ -24,7 +24,7 @@ export function buildTraffiqWorldBatch(rows, asOf = new Date().toISOString()) {
         longitude: Number(row.lng),
       },
       properties: {
-        incidentType: String(row.type),
+        type: String(row.type),
         severity: String(row.severity),
         status: String(row.status),
         occurredAt: iso(row.occurred_at),
@@ -51,7 +51,7 @@ export function buildTraffiqWorldBatch(rows, asOf = new Date().toISOString()) {
       occurredAt: iso(row.occurred_at),
       entityIds: ['traffiq:incident:' + row.id],
       properties: {
-        incidentType: String(row.type),
+        type: String(row.type),
         severity: String(row.severity),
         status: String(row.status),
       },
