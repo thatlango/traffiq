@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildTraffiqWorldBatch } from '../src/world-export.js';
+import { buildTraffiqWorldBatch } from '../src/world-contract.js';
 
 test('TraffIQ world export is spatial, evidence-backed and privacy-safe', () => {
   const batch = buildTraffiqWorldBatch([
