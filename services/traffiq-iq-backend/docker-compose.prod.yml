@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
+      - /opt/tuku/secrets/estate-product-telemetry.env
     environment:
       NODE_ENV: production
       PORT: 10000
