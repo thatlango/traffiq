@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { config } from './config.js';
 import { checkDatabase, pool, query, transaction } from './db.js';
@@ -287,6 +287,59 @@ app.get('/internal/world-export', asyncRoute(async (req, res) => {
 app.get('/health', asyncRoute(async (_req, res) => {
   const dbTime = await checkDatabase();
   res.json({ ok: true, service: 'traffiq-iq-api', version: '0.1.0', dbTime });
+}));
+
+app.get('/v1/internal/estate-telemetry', asyncRoute(async (req, res) => {
+  const expected = process.env.TUKU_ESTATE_INSIGHTS_SECRET || '';
+  const supplied = String(req.get('x-tuku-insights-key') || '');
+  if (!expected || supplied.length !== expected.length || !timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  const [users, journeys, points, incidents] = await Promise.all([
+    query(`SELECT count(*)::int AS total,
+      count(*) FILTER (WHERE created_at >= now() - interval '7 days')::int AS new_7d,
+      max(updated_at) AS last_user_at FROM users`),
+    query(`SELECT count(*)::int AS total,
+      count(*) FILTER (WHERE status IN ('active','paused'))::int AS active,
+      count(*) FILTER (WHERE started_at >= now() - interval '7 days')::int AS started_7d,
+      max(COALESCE(last_location_at, updated_at, started_at)) AS last_journey_at FROM journeys`),
+    query(`SELECT count(*) FILTER (WHERE received_at >= now() - interval '24 hours')::int AS points_24h,
+      count(*) FILTER (WHERE received_at >= now() - interval '7 days')::int AS points_7d,
+      max(received_at) AS last_point_at FROM journey_points`),
+    query(`SELECT count(*)::int AS total,
+      count(*) FILTER (WHERE status = 'active')::int AS active,
+      count(*) FILTER (WHERE occurred_at >= now() - interval '7 days')::int AS reported_7d,
+      max(occurred_at) AS last_incident_at FROM incidents`),
+  ]);
+
+  const u = users.rows[0] || {};
+  const j = journeys.rows[0] || {};
+  const p = points.rows[0] || {};
+  const i = incidents.rows[0] || {};
+
+  res.json({
+    productCode: 'traffiq',
+    generatedAt: new Date().toISOString(),
+    kpis: {
+      users: Number(u.total || 0),
+      newUsers7d: Number(u.new_7d || 0),
+      journeys: Number(j.total || 0),
+      activeJourneys: Number(j.active || 0),
+      journeysStarted7d: Number(j.started_7d || 0),
+      journeyPoints24h: Number(p.points_24h || 0),
+      journeyPoints7d: Number(p.points_7d || 0),
+      incidents: Number(i.total || 0),
+      activeIncidents: Number(i.active || 0),
+      incidents7d: Number(i.reported_7d || 0),
+    },
+    activity: {
+      lastUserAt: u.last_user_at || null,
+      lastJourneyAt: j.last_journey_at || null,
+      lastPointAt: p.last_point_at || null,
+      lastIncidentAt: i.last_incident_at || null,
+    },
+  });
 }));
 
 app.get('/v1/meta', (_req, res) => {
