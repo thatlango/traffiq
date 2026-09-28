@@ -2,7 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { authenticate } from './auth.js';
 import { query, transaction } from './db.js';
-import { previewRoute } from './geo.js';
+import { nearbyPlaces, previewRoute } from './geo.js';
 import {
   baseConfidenceForSource,
   calculateObservationConfidence,
@@ -151,6 +151,95 @@ async function observationsAlongRoute(routeId, corridorM = 1500) {
   return result.rows.map(mapObservation);
 }
 
+const providerReliability = source => ({
+  traffiq: 0.95,
+  memory: 0.90,
+  saved_place: 0.90,
+  google: 0.85,
+  'osm-overpass': 0.75,
+  photon: 0.55,
+  nominatim: 0.50
+})[source] ?? 0.50;
+
+async function routeCoordinateAt(routeId, progress) {
+  const result = await query(
+    `SELECT
+       ST_Y(ST_LineInterpolatePoint(geometry, $2)) AS lat,
+       ST_X(ST_LineInterpolatePoint(geometry, $2)) AS lng
+       FROM route_alternatives
+      WHERE id=$1`,
+    [routeId, Math.max(0, Math.min(1, Number(progress) || 0))]
+  );
+  if (!result.rowCount) return null;
+  return { lat: Number(result.rows[0].lat), lng: Number(result.rows[0].lng) };
+}
+
+async function discoverExternalStopCandidates({
+  userId,
+  route,
+  stopType,
+  targetProgress,
+  corridorM,
+  mapProvider = 'open'
+}) {
+  const coordinate = await routeCoordinateAt(route.id, targetProgress);
+  if (!coordinate) return [];
+
+  const categories = stopType === 'fuel' || stopType === 'charging'
+    ? ['fuel']
+    : ['food', 'cafe'];
+  const radiusM = Math.max(2500, Math.min(12000, Number(corridorM || 3000) * 2));
+
+  const settled = await Promise.allSettled(categories.map(category => nearbyPlaces({
+    userId,
+    category,
+    lat: coordinate.lat,
+    lng: coordinate.lng,
+    radiusM,
+    limit: 10,
+    mapProvider
+  })));
+
+  const seen = new Set();
+  const candidates = [];
+  for (const result of settled) {
+    if (result.status !== 'fulfilled') continue;
+    for (const place of result.value.results ?? []) {
+      if (!Number.isFinite(Number(place.lat)) || !Number.isFinite(Number(place.lng))) continue;
+      const identity = place.provider_place_id
+        ? `${place.source}:${place.provider_place_id}`
+        : `${place.source}:${String(place.name || '').toLowerCase()}:${Number(place.lat).toFixed(5)}:${Number(place.lng).toFixed(5)}`;
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+      const detourM = Number(place.distance_m ?? radiusM);
+      const reliability = place.verified ? 1 : providerReliability(place.source);
+      candidates.push({
+        id: identity,
+        external: true,
+        canonical_name: place.name,
+        category: place.category ?? (stopType === 'fuel' ? 'fuel' : 'restaurant'),
+        source: place.source,
+        provider_place_id: place.provider_place_id ?? null,
+        verified: Boolean(place.verified),
+        confidence: reliability,
+        lat: Number(place.lat),
+        lng: Number(place.lng),
+        detour_m: detourM,
+        progress: targetProgress,
+        stopType,
+        score: scoreStopCandidate({
+          stopType,
+          progress: targetProgress,
+          detourM,
+          targetProgress,
+          reliability
+        })
+      });
+    }
+  }
+  return candidates.sort((a, b) => b.score - a.score);
+}
+
 async function refreshRecommendations(userId, planId) {
   const plan = await ownedPlan(userId, planId);
   const route = await selectedRouteForPlan(plan);
@@ -201,7 +290,24 @@ async function refreshRecommendations(userId, planId) {
   }).filter(row => row.stopType !== 'other');
 
   const selected = [];
+  const preferredMapProvider = plan.preferences?.placeProvider === 'google' ? 'google' : 'open';
+
   if (distanceKm >= 90) {
+    const hasUsefulFuelCandidate = candidates.some(item =>
+      item.stopType === 'fuel' &&
+      item.progress >= Math.max(0.12, fuelTarget - 0.22) &&
+      item.progress <= Math.min(0.96, fuelTarget + 0.25)
+    );
+    if (!hasUsefulFuelCandidate) {
+      candidates.push(...await discoverExternalStopCandidates({
+        userId,
+        route,
+        stopType: 'fuel',
+        targetProgress: fuelTarget,
+        corridorM,
+        mapProvider: preferredMapProvider
+      }));
+    }
     const fuel = candidates
       .filter(item => item.stopType === 'fuel' && item.progress >= Math.max(0.12, fuelTarget - 0.22))
       .sort((a, b) => b.score - a.score)[0];
@@ -212,6 +318,21 @@ async function refreshRecommendations(userId, planId) {
   const restTargets = durationHours >= 4 ? [Math.min(0.42, 2 / durationHours), Math.min(0.82, 4 / durationHours)] :
     durationHours >= 2 ? [Math.min(0.70, 2 / durationHours)] : [];
   for (const target of restTargets) {
+    const hasUsefulRestCandidate = candidates.some(item =>
+      ['rest','food'].includes(item.stopType) &&
+      Math.abs(item.progress - target) <= 0.25
+    );
+    if (!hasUsefulRestCandidate) {
+      candidates.push(...await discoverExternalStopCandidates({
+        userId,
+        route,
+        stopType: 'rest',
+        targetProgress: target,
+        corridorM,
+        mapProvider: preferredMapProvider
+      }));
+    }
+
     const rest = candidates
       .filter(item => ['rest','food'].includes(item.stopType) && Math.abs(item.progress - target) <= 0.25)
       .map(item => ({ ...item, score: scoreStopCandidate({
@@ -247,10 +368,24 @@ async function refreshRecommendations(userId, planId) {
            distance_along_m, detour_m, eta, recommended, score, reason_codes, explanation, metadata
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true,$10,$11,$12,$13::jsonb)`,
         [
-          plan.id, route.id, item.id, item.stopType, sequence++, item.progress,
+          plan.id, route.id, item.external ? null : item.id, item.stopType, sequence++, item.progress,
           distanceAlongM, Math.round(Number(item.detour_m)), eta, item.score,
           item.reasons, explanation,
-          JSON.stringify({ placeName: item.canonical_name, placeCategory: item.category })
+          JSON.stringify({
+            placeName: item.canonical_name,
+            placeCategory: item.category,
+            provider: item.source ?? 'traffiq',
+            externalPlace: item.external ? {
+              id: item.id,
+              name: item.canonical_name,
+              category: item.category,
+              lat: Number(item.lat),
+              lng: Number(item.lng),
+              verified: Boolean(item.verified),
+              source: item.source,
+              providerPlaceId: item.provider_place_id
+            } : null
+          })
         ]
       );
     }
@@ -334,6 +469,13 @@ async function planBundle(userId, planId) {
         lat: Number(row.place_lat),
         lng: Number(row.place_lng),
         verified: Boolean(row.place_verified)
+      } : row.metadata?.externalPlace ? {
+        id: row.metadata.externalPlace.id,
+        name: row.metadata.externalPlace.name,
+        category: row.metadata.externalPlace.category,
+        lat: Number(row.metadata.externalPlace.lat),
+        lng: Number(row.metadata.externalPlace.lng),
+        verified: Boolean(row.metadata.externalPlace.verified)
       } : null
     })),
     intelligence: {
