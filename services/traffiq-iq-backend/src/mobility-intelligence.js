@@ -11,7 +11,8 @@ import {
   estimateVehicleRangeKm,
   h3Indexes,
   observationStatus,
-  scoreStopCandidate
+  scoreStopCandidate,
+  shouldReplanJourney
 } from './mobility-core.js';
 
 export const mobilityIntelligenceRouter = express.Router();
@@ -344,7 +345,7 @@ async function planBundle(userId, planId) {
 
 mobilityIntelligenceRouter.get('/intelligence/capabilities', (_req, res) => {
   res.json({
-    contractVersion: '2026-09-28.v1',
+    contractVersion: '2026-09-28.v2',
     platforms: ['web','android','ios'],
     spatial: { engine: 'postgis', h3Resolutions: [7,8,9], routeCorridors: true },
     offline: { idempotentClientEvents: true, observationReports: true },
@@ -473,6 +474,119 @@ mobilityIntelligenceRouter.post('/journey-plans/:id/select-route', authenticate,
   await query('UPDATE journey_plans SET selected_route_id=$2, intelligence_version=intelligence_version+1, updated_at=now() WHERE id=$1', [planId, body.routeId]);
   await refreshRecommendations(req.user.id, planId);
   res.json(await planBundle(req.user.id, planId));
+}));
+
+mobilityIntelligenceRouter.post('/journey-plans/:id/replan', authenticate, asyncRoute(async (req, res) => {
+  const planId = parse(uuid, req.params.id);
+  const body = parse(z.object({
+    origin: coordinate,
+    departureAt: z.string().datetime({ offset: true }).optional(),
+    force: z.boolean().optional()
+  }), req.body);
+
+  const plan = await ownedPlan(req.user.id, planId);
+  const currentRoute = await selectedRouteForPlan(plan);
+  let offRouteDistanceM = null;
+
+  if (currentRoute) {
+    const distance = await query(
+      `SELECT ST_Distance(
+          geometry::geography,
+          ST_SetSRID(ST_MakePoint($2,$3),4326)::geography
+        ) AS distance_m
+         FROM route_alternatives
+        WHERE id=$1 AND journey_plan_id=$4`,
+      [currentRoute.id, body.origin.lng, body.origin.lat, planId]
+    );
+    offRouteDistanceM = asNumber(distance.rows[0]?.distance_m);
+  }
+
+  const needsReplan = !currentRoute || shouldReplanJourney({
+    offRouteDistanceM,
+    force: body.force ?? false,
+    thresholdM: Number(plan.preferences?.replanThresholdM ?? 200)
+  });
+
+  if (!needsReplan) {
+    await refreshRecommendations(req.user.id, planId);
+    return res.json({
+      ...(await planBundle(req.user.id, planId)),
+      replan: { replanned: false, offRouteDistanceM, reason: 'still_on_route' }
+    });
+  }
+
+  const preview = await previewRoute({
+    originLat: body.origin.lat,
+    originLng: body.origin.lng,
+    destinationLat: Number(plan.destination_lat),
+    destinationLng: Number(plan.destination_lng),
+    mode: plan.mode
+  });
+
+  if (!preview.routes?.length) {
+    return res.status(409).json({ error: 'route_unavailable' });
+  }
+
+  await transaction(async client => {
+    await client.query('UPDATE journey_plans SET selected_route_id=NULL WHERE id=$1 AND user_id=$2', [planId, req.user.id]);
+    await client.query('DELETE FROM journey_stops WHERE journey_plan_id=$1', [planId]);
+    await client.query('DELETE FROM route_alternatives WHERE journey_plan_id=$1', [planId]);
+
+    let selectedRouteId = null;
+    let selectedRoute = null;
+    for (const route of preview.routes) {
+      const inserted = await client.query(
+        `INSERT INTO route_alternatives (
+           journey_plan_id, route_key, provider, profile, distance_m, duration_s, geometry, raw_route
+         ) VALUES ($1,$2,$3,$4,$5,$6,ST_SetSRID(ST_GeomFromGeoJSON($7),4326),$8::jsonb)
+         RETURNING id`,
+        [
+          planId, route.id, preview.provider, preview.profile, route.distanceM, route.durationS,
+          JSON.stringify(route.geometry), JSON.stringify(route)
+        ]
+      );
+      if (!selectedRouteId) {
+        selectedRouteId = inserted.rows[0].id;
+        selectedRoute = route;
+      }
+    }
+
+    await client.query(
+      `UPDATE journey_plans
+          SET origin_name=$3, origin_lat=$4, origin_lng=$5,
+              departure_at=COALESCE($6::timestamptz, departure_at),
+              selected_route_id=$7,
+              intelligence_version=intelligence_version+1,
+              updated_at=now()
+        WHERE id=$1 AND user_id=$2`,
+      [
+        planId, req.user.id, body.origin.name ?? plan.origin_name, body.origin.lat, body.origin.lng,
+        body.departureAt ?? null, selectedRouteId
+      ]
+    );
+
+    if (selectedRoute) {
+      await client.query(
+        `UPDATE journeys
+            SET origin_name=$3, origin_lat=$4, origin_lng=$5,
+                route_provider=$6, planned_distance_m=$7, planned_duration_s=$8,
+                route_geometry=ST_SetSRID(ST_GeomFromGeoJSON($9),4326),
+                updated_at=now()
+          WHERE journey_plan_id=$1 AND user_id=$2 AND status IN ('active','paused')`,
+        [
+          planId, req.user.id, body.origin.name ?? plan.origin_name, body.origin.lat, body.origin.lng,
+          preview.provider, selectedRoute.distanceM, selectedRoute.durationS,
+          JSON.stringify(selectedRoute.geometry)
+        ]
+      );
+    }
+  });
+
+  await refreshRecommendations(req.user.id, planId);
+  res.json({
+    ...(await planBundle(req.user.id, planId)),
+    replan: { replanned: true, offRouteDistanceM, reason: currentRoute ? 'off_route' : 'route_missing' }
+  });
 }));
 
 mobilityIntelligenceRouter.post('/journey-plans/:id/recommendations/refresh', authenticate, asyncRoute(async (req, res) => {
