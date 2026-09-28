@@ -7,7 +7,8 @@ import {
   estimateVehicleRangeKm,
   h3Indexes,
   observationStatus,
-  scoreStopCandidate
+  scoreStopCandidate,
+  shouldReplanJourney
 } from '../src/mobility-core.js';
 
 test('H3 indexes are generated at all supported resolutions', () => {
@@ -58,4 +59,12 @@ test('journey stop scoring prefers smaller detours near the target', () => {
   assert.ok(near > far);
   assert.equal(categorizePlace('gas_station'), 'fuel');
   assert.equal(categorizePlace('restaurant'), 'rest');
+});
+
+
+test('replanning is backend-gated by corridor distance unless forced', () => {
+  assert.equal(shouldReplanJourney({ offRouteDistanceM: 120 }), false);
+  assert.equal(shouldReplanJourney({ offRouteDistanceM: 240 }), true);
+  assert.equal(shouldReplanJourney({ offRouteDistanceM: 50, force: true }), true);
+  assert.equal(shouldReplanJourney({ offRouteDistanceM: 350, thresholdM: 500 }), false);
 });

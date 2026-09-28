@@ -99,3 +99,15 @@ export function scoreStopCandidate({ stopType, progress, detourM, targetProgress
   const typeBonus = stopType === 'fuel' ? 8 : stopType === 'rest' ? 5 : 0;
   return Math.max(0, Math.min(120, 100 - detourPenalty - progressPenalty + reliabilityBonus + typeBonus));
 }
+
+
+export function shouldReplanJourney({
+  offRouteDistanceM,
+  force = false,
+  thresholdM = 200
+} = {}) {
+  if (force) return true;
+  const distance = Number(offRouteDistanceM);
+  const threshold = Math.max(25, Number(thresholdM) || 200);
+  return Number.isFinite(distance) && distance > threshold;
+}
