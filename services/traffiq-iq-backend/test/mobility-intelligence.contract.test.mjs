@@ -68,3 +68,24 @@ test('replanning is backend-gated by corridor distance unless forced', () => {
   assert.equal(shouldReplanJourney({ offRouteDistanceM: 50, force: true }), true);
   assert.equal(shouldReplanJourney({ offRouteDistanceM: 350, thresholdM: 500 }), false);
 });
+
+
+test('route alerts rank urgent hazards and nearby stops ahead of the traveller', () => {
+  const alerts = buildRouteAlerts({
+    currentProgress: 0.40,
+    routeDistanceM: 100000,
+    observations: [
+      { id: 'hazard-a', type: 'pothole', severity: 'high', confidence: 0.8, progressFraction: 0.45 },
+      { id: 'old-hazard', type: 'traffic', severity: 'critical', confidence: 0.9, progressFraction: 0.20 },
+      { id: 'far-hazard', type: 'crash', severity: 'critical', confidence: 0.9, progressFraction: 0.85 }
+    ],
+    stops: [
+      { id: 'fuel-a', stopType: 'fuel', status: 'planned', recommended: true, progressFraction: 0.60, place: { name: 'Fuel One' } }
+    ]
+  });
+  assert.equal(alerts[0].id, 'observation:hazard-a');
+  assert.equal(alerts[0].distanceAheadM, 5000);
+  assert.ok(alerts.some(item => item.id === 'stop:fuel-a'));
+  assert.ok(!alerts.some(item => item.id === 'observation:old-hazard'));
+  assert.ok(!alerts.some(item => item.id === 'observation:far-hazard'));
+});
