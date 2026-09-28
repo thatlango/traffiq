@@ -27,5 +27,7 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Syntax checks
         run: npm run check
+      - name: Mobility intelligence contract
+        run: npm run test:intelligence
       - name: World export privacy contract
         run: npm run test:world
