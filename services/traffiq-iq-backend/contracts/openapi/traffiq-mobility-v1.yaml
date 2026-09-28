@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Traffiq Mobility Intelligence API
-  version: 2026-09-28.v1
+  version: 2026-09-28.v2
   description: Backend-first journey, spatial and community intelligence contract shared by web, Android and iOS.
 servers:
   - url: https://api.traffiq.tukutuku.org/v1
@@ -90,6 +90,39 @@ paths:
                 routeId: { type: string, format: uuid }
       responses:
         '200': { description: Updated plan }
+  /journey-plans/{id}/replan:
+    post:
+      operationId: replanJourney
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [origin]
+              properties:
+                origin: { $ref: '#/components/schemas/Coordinate' }
+                departureAt: { type: string, format: date-time }
+                force: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Replanned journey bundle, or the current bundle when still on route.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/JourneyPlanBundle' }
+                  - type: object
+                    properties:
+                      replan:
+                        type: object
+                        required: [replanned, reason]
+                        properties:
+                          replanned: { type: boolean }
+                          offRouteDistanceM: { type: number }
+                          reason: { type: string, enum: [still_on_route, off_route, route_missing] }
   /journey-plans/{id}/recommendations/refresh:
     post:
       operationId: refreshJourneyRecommendations
