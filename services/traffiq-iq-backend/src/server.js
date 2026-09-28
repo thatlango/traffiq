@@ -16,6 +16,7 @@ import {
 import { previewRoute, searchPlaces } from './geo.js';
 import { runMigrations } from '../scripts/migrate.js';
 import { assertWorldReadKey, loadTraffiqWorldBatch } from './world-export.js';
+import { mobilityIntelligenceRouter } from './mobility-intelligence.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -354,7 +355,7 @@ app.get('/v1/meta', (_req, res) => {
 
 app.post('/v1/auth/tuku/exchange', asyncRoute(async (req, res) => {
   const body = parse(z.object({
-    clientId: z.enum(['traffiq-web','traffiq-android']),
+    clientId: z.enum(['traffiq-web','traffiq-android','traffiq-ios']),
     code: z.string().min(16).max(4096),
     codeVerifier: z.string().min(43).max(128),
     redirectUri: z.string().url(),
@@ -362,7 +363,9 @@ app.post('/v1/auth/tuku/exchange', asyncRoute(async (req, res) => {
   }), req.body);
   const expectedRedirect = body.clientId === 'traffiq-android'
     ? config.tukuAndroidRedirectUri
-    : `${config.publicWebBaseUrl}/auth/tuku/callback`;
+    : body.clientId === 'traffiq-ios'
+      ? config.tukuIosRedirectUri
+      : `${config.publicWebBaseUrl}/auth/tuku/callback`;
   if (body.redirectUri !== expectedRedirect) return res.status(400).json({ error: 'invalid_redirect_uri' });
   const tuku = await exchangeTukuAuthorization(body);
   const user = await mapTukuIdentity(tuku.identity);
@@ -722,6 +725,8 @@ app.get('/v1/sync/pull', authenticate, asyncRoute(async (req, res) => {
   ]);
   res.json({ serverTime: new Date().toISOString(), journeys: journeys.rows, incidents: incidents.rows, devices: devices.rows });
 }));
+
+app.use('/v1', mobilityIntelligenceRouter);
 
 app.use((req, res) => res.status(404).json({ error: 'not_found', path: req.path }));
 

@@ -22,6 +22,7 @@ export const config = {
   publicApiBaseUrl: process.env.PUBLIC_API_BASE_URL ?? '',
   publicWebBaseUrl: process.env.PUBLIC_WEB_BASE_URL ?? '',
   tukuAndroidRedirectUri: process.env.TUKU_ANDROID_REDIRECT_URI ?? 'traffiq://auth/tuku/callback',
+  tukuIosRedirectUri: process.env.TUKU_IOS_REDIRECT_URI ?? 'traffiq://auth/tuku/callback',
   tukuCoreUrl: (process.env.TUKU_CORE_INTERNAL_URL ?? process.env.TUKU_CORE_URL ?? 'https://core.tukutuku.org').replace(/\/$/, ''),
   tukuProfileSyncKey: process.env.TUKU_PROFILE_SYNC_KEY ?? '',
   worldReadKey: process.env.TUKU_WORLD_READ_KEY ?? '',
