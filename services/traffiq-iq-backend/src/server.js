@@ -16,6 +16,7 @@ import {
 import { previewRoute, searchPlaces } from './geo.js';
 import { runMigrations } from '../scripts/migrate.js';
 import { assertWorldReadKey, loadTraffiqWorldBatch } from './world-export.js';
+import { mobilityIntelligenceRouter } from './mobility-intelligence.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -722,6 +723,8 @@ app.get('/v1/sync/pull', authenticate, asyncRoute(async (req, res) => {
   ]);
   res.json({ serverTime: new Date().toISOString(), journeys: journeys.rows, incidents: incidents.rows, devices: devices.rows });
 }));
+
+app.use('/v1', mobilityIntelligenceRouter);
 
 app.use((req, res) => res.status(404).json({ error: 'not_found', path: req.path }));
 

@@ -1,0 +1,242 @@
+openapi: 3.1.0
+info:
+  title: Traffiq Mobility Intelligence API
+  version: 2026-09-28.v1
+  description: Backend-first journey, spatial and community intelligence contract shared by web, Android and iOS.
+servers:
+  - url: https://api.traffiq.tukutuku.org/v1
+security:
+  - bearerAuth: []
+paths:
+  /intelligence/capabilities:
+    get:
+      security: []
+      operationId: getMobilityCapabilities
+      responses:
+        '200':
+          description: Mobility platform capabilities.
+  /vehicles:
+    get:
+      operationId: listVehicles
+      responses:
+        '200': { description: Vehicles }
+    post:
+      operationId: upsertVehicle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VehicleInput' }
+      responses:
+        '201': { description: Vehicle saved }
+  /journey-plans:
+    post:
+      operationId: createJourneyPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JourneyPlanInput' }
+      responses:
+        '201':
+          description: Intelligent journey plan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyPlanBundle' }
+  /journey-plans/{id}:
+    get:
+      operationId: getJourneyPlan
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Intelligent journey plan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyPlanBundle' }
+  /journey-plans/{id}/select-route:
+    post:
+      operationId: selectJourneyRoute
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [routeId]
+              properties:
+                routeId: { type: string, format: uuid }
+      responses:
+        '200': { description: Updated plan }
+  /journey-plans/{id}/recommendations/refresh:
+    post:
+      operationId: refreshJourneyRecommendations
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200': { description: Updated recommendations and risk }
+  /journey-plans/{id}/activate:
+    post:
+      operationId: activateJourneyPlan
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [journeyClientId]
+              properties:
+                journeyClientId: { type: string, format: uuid }
+      responses:
+        '201': { description: Active canonical journey }
+  /observations:
+    post:
+      operationId: reportMobilityObservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ObservationInput' }
+      responses:
+        '201': { description: New observation }
+        '200': { description: Report merged into a matching observation }
+  /observations/nearby:
+    get:
+      operationId: listNearbyObservations
+      parameters:
+        - { name: lat, in: query, required: true, schema: { type: number } }
+        - { name: lng, in: query, required: true, schema: { type: number } }
+        - { name: radiusM, in: query, schema: { type: integer, minimum: 100, maximum: 50000 } }
+        - { name: types, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Nearby current observations }
+  /observations/{id}/vote:
+    put:
+      operationId: voteOnObservation
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vote]
+              properties:
+                vote: { type: string, enum: [confirm, dispute, clear] }
+      responses:
+        '200': { description: Observation confidence and state updated }
+  /client-events/batch:
+    post:
+      operationId: syncClientEvents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientEventBatch' }
+      responses:
+        '202': { description: Idempotent event batch accepted }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    Coordinate:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lng: { type: number, minimum: -180, maximum: 180 }
+        name: { type: string }
+    VehicleInput:
+      type: object
+      required: [clientId, displayName]
+      properties:
+        clientId: { type: string, format: uuid }
+        displayName: { type: string }
+        make: { type: string }
+        model: { type: string }
+        fuelType: { type: string, enum: [petrol, diesel, hybrid, electric, other] }
+        tankCapacityL: { type: number }
+        expectedConsumptionLPer100Km: { type: number }
+        currentFuelPct: { type: number, minimum: 0, maximum: 100 }
+        estimatedRangeKm: { type: number }
+        serviceDueKm: { type: number }
+        metadata: { type: object, additionalProperties: true }
+    JourneyPlanInput:
+      type: object
+      required: [clientId, mode, origin, destination]
+      properties:
+        clientId: { type: string, format: uuid }
+        mode: { type: string, enum: [car, motorcycle, taxi, bus, truck, bicycle, walking, other] }
+        origin: { $ref: '#/components/schemas/Coordinate' }
+        destination: { $ref: '#/components/schemas/Coordinate' }
+        departureAt: { type: string, format: date-time }
+        vehicleId: { type: string, format: uuid }
+        travellerContext: { type: object, additionalProperties: true }
+        preferences: { type: object, additionalProperties: true }
+    JourneyPlanBundle:
+      type: object
+      required: [plan, routes, stops, intelligence]
+      properties:
+        plan: { type: object, additionalProperties: true }
+        routes:
+          type: array
+          items: { type: object, additionalProperties: true }
+        stops:
+          type: array
+          items: { type: object, additionalProperties: true }
+        intelligence:
+          type: object
+          additionalProperties: true
+    ObservationInput:
+      type: object
+      required: [clientId, type, lat, lng, observedAt]
+      properties:
+        clientId: { type: string, format: uuid }
+        journeyId: { type: string, format: uuid }
+        type:
+          type: string
+          enum: [crash, traffic, pothole, flooding, roadblock, roadworks, broken_vehicle, debris, bad_road, fuel_unavailable, police_checkpoint, unsafe_area, road_closure, animal, harsh_braking, slowdown, road_damage, other]
+        source: { type: string, enum: [community, sensor] }
+        severity: { type: string, enum: [low, medium, high, critical] }
+        lat: { type: number }
+        lng: { type: number }
+        headingDeg: { type: number }
+        direction: { type: string }
+        description: { type: string }
+        observedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        evidence:
+          type: array
+          items: { type: object, additionalProperties: true }
+        metadata: { type: object, additionalProperties: true }
+    ClientEventBatch:
+      type: object
+      required: [events]
+      properties:
+        deviceId: { type: string, format: uuid }
+        events:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            type: object
+            required: [id, type, occurredAt]
+            properties:
+              id: { type: string, format: uuid }
+              type: { type: string }
+              occurredAt: { type: string, format: date-time }
+              payload: { type: object, additionalProperties: true }

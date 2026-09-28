@@ -61,3 +61,21 @@ The service can auto-run versioned migrations on startup with `AUTO_MIGRATE=true
 ## Infrastructure
 
 Recommended first deployment: Render web service + PostgreSQL, both in Frankfurt. For production, move from free infrastructure to a persistent paid database before the pilot carries real user data. Object storage (incident photos), FCM/APNs delivery workers, rate limiting and observability are deliberately separate follow-on services rather than hidden inside the mobile clients.
+
+
+## Mobility Intelligence v1
+
+TraffIQ now treats the backend as the source of truth for journey planning, community observations, route risk and recommendation decisions. The web, Android and iOS clients consume the same versioned contract in `contracts/openapi/traffiq-mobility-v1.yaml`.
+
+The production PostgreSQL image includes PostGIS. Migration `009_mobility_intelligence.sql` adds spatial GiST indexes, H3 identifiers, journey plans/routes/stops, vehicles, unified mobility observations, client event idempotency and journey alert storage.
+
+Run:
+
+```bash
+npm run migrate
+npm run check
+npm run test:intelligence
+npm run test:world
+```
+
+Client rule: clients capture native context (location, sensors, voice, background execution and local offline queues); scoring, trust, route intelligence, risk and recommendation decisions remain backend-owned.
