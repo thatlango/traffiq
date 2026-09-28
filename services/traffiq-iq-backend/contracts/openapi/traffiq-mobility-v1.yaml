@@ -15,6 +15,26 @@ paths:
       responses:
         '200':
           description: Mobility platform capabilities.
+  /geo/search:
+    get:
+      operationId: searchPlaces
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 200 } }
+        - { name: lat, in: query, schema: { type: number, minimum: -90, maximum: 90 } }
+        - { name: lng, in: query, schema: { type: number, minimum: -180, maximum: 180 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 10, default: 8 } }
+      responses:
+        '200':
+          description: Ranked destination search results.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/PlaceSearchResult' }
   /vehicles:
     get:
       operationId: listVehicles
@@ -160,6 +180,20 @@ components:
         lat: { type: number, minimum: -90, maximum: 90 }
         lng: { type: number, minimum: -180, maximum: 180 }
         name: { type: string }
+    PlaceSearchResult:
+      type: object
+      required: [id, name, lat, lng]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        displayName: { type: string }
+        detail: { type: string }
+        formatted_address: { type: string }
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lng: { type: number, minimum: -180, maximum: 180 }
+        type: { type: string }
+        category: { type: string }
+        source: { type: string }
     VehicleInput:
       type: object
       required: [clientId, displayName]
