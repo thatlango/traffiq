@@ -111,3 +111,92 @@ export function shouldReplanJourney({
   const threshold = Math.max(25, Number(thresholdM) || 200);
   return Number.isFinite(distance) && distance > threshold;
 }
+
+
+const ALERT_RANK = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+
+const humanizeMobilityType = value => String(value || 'road condition')
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, char => char.toUpperCase());
+
+const aheadMessage = distanceM => {
+  const metres = Math.max(0, Number(distanceM) || 0);
+  return metres < 1000
+    ? `${Math.max(50, Math.round(metres / 50) * 50)} m ahead`
+    : `${(metres / 1000).toFixed(metres < 10_000 ? 1 : 0)} km ahead`;
+};
+
+export function buildRouteAlerts({
+  observations = [],
+  stops = [],
+  currentProgress = 0,
+  routeDistanceM = 0,
+  maxAlerts = 5
+} = {}) {
+  const progress = clamp(currentProgress);
+  const routeDistance = Math.max(0, Number(routeDistanceM) || 0);
+  const alerts = [];
+
+  for (const observation of observations) {
+    const itemProgress = Number(observation.progressFraction);
+    if (!Number.isFinite(itemProgress) || itemProgress < progress - 0.01) continue;
+    const distanceAheadM = Math.max(0, Math.round((itemProgress - progress) * routeDistance));
+    const confidence = clamp(observation.confidence);
+    const severity = String(observation.severity || 'medium').toLowerCase();
+    if (distanceAheadM > 30_000) continue;
+    if (!['high','critical'].includes(severity) && confidence < 0.55) continue;
+    const title = humanizeMobilityType(observation.type);
+    alerts.push({
+      id: `observation:${observation.id}`,
+      kind: 'hazard',
+      severity: ['critical','high','medium','low'].includes(severity) ? severity : 'medium',
+      title,
+      message: `${title} · ${aheadMessage(distanceAheadM)}`,
+      progressFraction: itemProgress,
+      distanceAheadM,
+      confidence,
+      observationId: observation.id,
+      stopId: null
+    });
+  }
+
+  const nextStops = stops
+    .filter(stop => stop.recommended !== false && ['planned','accepted'].includes(String(stop.status || 'planned')))
+    .map(stop => {
+      const stopProgress = Number(stop.progressFraction);
+      return { stop, stopProgress };
+    })
+    .filter(({ stopProgress }) => Number.isFinite(stopProgress) && stopProgress >= progress - 0.01)
+    .map(({ stop, stopProgress }) => ({
+      stop,
+      stopProgress,
+      distanceAheadM: Math.max(0, Math.round((stopProgress - progress) * routeDistance))
+    }))
+    .filter(({ distanceAheadM }) => distanceAheadM <= 50_000)
+    .sort((a, b) => a.distanceAheadM - b.distanceAheadM)
+    .slice(0, 2);
+
+  for (const { stop, stopProgress, distanceAheadM } of nextStops) {
+    const stopType = String(stop.stopType || 'stop').toLowerCase();
+    const placeName = stop.place?.name || (stopType === 'fuel' ? 'Fuel stop' : 'Rest stop');
+    alerts.push({
+      id: `stop:${stop.id}`,
+      kind: 'stop',
+      severity: 'info',
+      title: stopType === 'fuel' ? 'Fuel stop ahead' : 'Useful stop ahead',
+      message: `${placeName} · ${aheadMessage(distanceAheadM)}`,
+      progressFraction: stopProgress,
+      distanceAheadM,
+      confidence: null,
+      observationId: null,
+      stopId: stop.id
+    });
+  }
+
+  return alerts
+    .sort((a, b) =>
+      (ALERT_RANK[b.severity] ?? 0) - (ALERT_RANK[a.severity] ?? 0)
+      || a.distanceAheadM - b.distanceAheadM
+    )
+    .slice(0, Math.max(1, Number(maxAlerts) || 5));
+}

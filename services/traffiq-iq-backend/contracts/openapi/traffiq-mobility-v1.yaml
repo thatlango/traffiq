@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Traffiq Mobility Intelligence API
-  version: 2026-09-28.v2
+  version: 2026-09-28.v3
   description: Backend-first journey, spatial and community intelligence contract shared by web, Android and iOS.
 servers:
   - url: https://api.traffiq.tukutuku.org/v1

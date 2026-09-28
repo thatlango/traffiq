@@ -403,7 +403,24 @@ async function refreshRecommendations(userId, planId) {
   return refreshed.rows;
 }
 
-async function planBundle(userId, planId) {
+async function routeProgressAt(routeId, location) {
+  if (!routeId || !location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) return 0;
+  const result = await query(
+    `SELECT ST_LineLocatePoint(
+       geometry,
+       ST_ClosestPoint(
+         geometry,
+         ST_SetSRID(ST_MakePoint($2,$3),4326)
+       )
+     ) AS progress
+       FROM route_alternatives
+      WHERE id=$1`,
+    [routeId, Number(location.lng), Number(location.lat)]
+  );
+  return Math.max(0, Math.min(1, Number(result.rows[0]?.progress ?? 0)));
+}
+
+async function planBundle(userId, planId, { currentLocation = null } = {}) {
   const plan = await ownedPlan(userId, planId);
   const routes = await query(
     `SELECT id, route_key, provider, profile, distance_m, duration_s,
@@ -421,6 +438,46 @@ async function planBundle(userId, planId) {
   );
   const selected = routes.rows.find(route => route.id === plan.selected_route_id) ?? null;
   const observations = selected ? await observationsAlongRoute(selected.id) : [];
+  const mappedStops = stops.rows.map(row => ({
+    id: row.id,
+    routeId: row.route_id,
+    stopType: row.stop_type,
+    status: row.status,
+    sequence: row.sequence_no,
+    progressFraction: asNumber(row.progress_fraction),
+    distanceAlongM: row.distance_along_m,
+    detourM: row.detour_m,
+    eta: row.eta,
+    recommended: row.recommended,
+    score: asNumber(row.score),
+    reasonCodes: row.reason_codes ?? [],
+    explanation: row.explanation,
+    place: row.place_id ? {
+      id: row.place_id,
+      name: row.place_name,
+      category: row.place_category,
+      lat: Number(row.place_lat),
+      lng: Number(row.place_lng),
+      verified: Boolean(row.place_verified)
+    } : row.metadata?.externalPlace ? {
+      id: row.metadata.externalPlace.id,
+      name: row.metadata.externalPlace.name,
+      category: row.metadata.externalPlace.category,
+      lat: Number(row.metadata.externalPlace.lat),
+      lng: Number(row.metadata.externalPlace.lng),
+      verified: Boolean(row.metadata.externalPlace.verified)
+    } : null
+  }));
+  const currentProgressFraction = selected
+    ? await routeProgressAt(selected.id, currentLocation)
+    : 0;
+  const alerts = buildRouteAlerts({
+    observations,
+    stops: mappedStops,
+    currentProgress: currentProgressFraction,
+    routeDistanceM: selected ? Number(selected.distance_m) : 0
+  });
+
   return {
     plan: {
       id: plan.id,
@@ -448,50 +505,23 @@ async function planBundle(userId, planId) {
       riskSummary: row.risk_summary ?? {},
       score: asNumber(row.score)
     })),
-    stops: stops.rows.map(row => ({
-      id: row.id,
-      routeId: row.route_id,
-      stopType: row.stop_type,
-      status: row.status,
-      sequence: row.sequence_no,
-      progressFraction: asNumber(row.progress_fraction),
-      distanceAlongM: row.distance_along_m,
-      detourM: row.detour_m,
-      eta: row.eta,
-      recommended: row.recommended,
-      score: asNumber(row.score),
-      reasonCodes: row.reason_codes ?? [],
-      explanation: row.explanation,
-      place: row.place_id ? {
-        id: row.place_id,
-        name: row.place_name,
-        category: row.place_category,
-        lat: Number(row.place_lat),
-        lng: Number(row.place_lng),
-        verified: Boolean(row.place_verified)
-      } : row.metadata?.externalPlace ? {
-        id: row.metadata.externalPlace.id,
-        name: row.metadata.externalPlace.name,
-        category: row.metadata.externalPlace.category,
-        lat: Number(row.metadata.externalPlace.lat),
-        lng: Number(row.metadata.externalPlace.lng),
-        verified: Boolean(row.metadata.externalPlace.verified)
-      } : null
-    })),
+    stops: mappedStops,
     intelligence: {
       risk: riskSummary(observations),
-      observations
+      observations,
+      alerts,
+      currentProgressFraction
     }
   };
 }
 
 mobilityIntelligenceRouter.get('/intelligence/capabilities', (_req, res) => {
   res.json({
-    contractVersion: '2026-09-28.v2',
+    contractVersion: '2026-09-28.v3',
     platforms: ['web','android','ios'],
     spatial: { engine: 'postgis', h3Resolutions: [7,8,9], routeCorridors: true },
     offline: { idempotentClientEvents: true, observationReports: true },
-    journey: { plans: true, routeAlternatives: true, recommendedStops: true, risk: true, replanningContract: true }
+    journey: { plans: true, routeAlternatives: true, recommendedStops: true, risk: true, alerts: true, replanningContract: true }
   });
 });
 
@@ -652,7 +682,7 @@ mobilityIntelligenceRouter.post('/journey-plans/:id/replan', authenticate, async
   if (!needsReplan) {
     await refreshRecommendations(req.user.id, planId);
     return res.json({
-      ...(await planBundle(req.user.id, planId)),
+      ...(await planBundle(req.user.id, planId, { currentLocation: body.origin })),
       replan: { replanned: false, offRouteDistanceM, reason: 'still_on_route' }
     });
   }
@@ -726,7 +756,7 @@ mobilityIntelligenceRouter.post('/journey-plans/:id/replan', authenticate, async
 
   await refreshRecommendations(req.user.id, planId);
   res.json({
-    ...(await planBundle(req.user.id, planId)),
+    ...(await planBundle(req.user.id, planId, { currentLocation: body.origin })),
     replan: { replanned: true, offRouteDistanceM, reason: currentRoute ? 'off_route' : 'route_missing' }
   });
 }));
