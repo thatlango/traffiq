@@ -112,7 +112,43 @@ paths:
               properties:
                 journeyClientId: { type: string, format: uuid }
       responses:
-        '201': { description: Active canonical journey }
+        '201':
+          description: Active canonical journey.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [journey, plan]
+                properties:
+                  journey: { $ref: '#/components/schemas/ActivatedJourney' }
+                  plan: { type: object, additionalProperties: true }
+  /journeys/{id}/points:
+    post:
+      operationId: uploadJourneyPoints
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JourneyPointBatch' }
+      responses:
+        '202':
+          description: Journey points accepted idempotently.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JourneyPointBatchResponse' }
+  /journeys/{id}/end:
+    post:
+      operationId: endJourney
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Completed journey.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ActivatedJourney' }
   /observations:
     post:
       operationId: reportMobilityObservation
@@ -235,6 +271,47 @@ components:
         intelligence:
           type: object
           additionalProperties: true
+    ActivatedJourney:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: string, format: uuid }
+        client_id: { type: string, format: uuid }
+        status: { type: string }
+        mode: { type: string }
+        destination_name: { type: string }
+        destination_lat: { type: number }
+        destination_lng: { type: number }
+        journey_plan_id: { type: string, format: uuid }
+    JourneyPoint:
+      type: object
+      required: [id, lat, lng, recordedAt]
+      properties:
+        id: { type: string, format: uuid }
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lng: { type: number, minimum: -180, maximum: 180 }
+        accuracyM: { type: number, minimum: 0, maximum: 10000 }
+        speedMps: { type: number, minimum: 0, maximum: 150 }
+        bearingDeg: { type: number, minimum: 0, maximum: 360 }
+        altitudeM: { type: number, minimum: -1000, maximum: 12000 }
+        recordedAt: { type: string, format: date-time }
+        source: { type: string, enum: [gps, network, manual] }
+    JourneyPointBatch:
+      type: object
+      required: [points]
+      properties:
+        points:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items: { $ref: '#/components/schemas/JourneyPoint' }
+    JourneyPointBatchResponse:
+      type: object
+      required: [accepted, duplicateOrExisting, journey]
+      properties:
+        accepted: { type: integer, minimum: 0 }
+        duplicateOrExisting: { type: integer, minimum: 0 }
+        journey: { $ref: '#/components/schemas/ActivatedJourney' }
     ObservationInput:
       type: object
       required: [clientId, type, lat, lng, observedAt]
