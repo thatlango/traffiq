@@ -14,10 +14,28 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     defaults:
       run:
         working-directory: services/traffiq-iq-backend
+    env:
+      DATABASE_URL: postgresql://traffiq:traffiq-ci@localhost:5432/traffiq_ci
+      JWT_SECRET: ci-only-traffiq-secret-at-least-32-characters-long
+      AUTO_MIGRATE: "false"
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6-alpine
+        env:
+          POSTGRES_DB: traffiq_ci
+          POSTGRES_USER: traffiq
+          POSTGRES_PASSWORD: traffiq-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U traffiq -d traffiq_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -27,6 +45,11 @@ jobs:
         run: npm install --ignore-scripts --no-audit --no-fund
       - name: Syntax checks
         run: npm run check
+      - name: Apply full database migration chain
+        run: npm run migrate
+      - name: Verify PostGIS extension
+        run: |
+          node --input-type=module -e "import pg from 'pg'; const c=new pg.Client({connectionString:process.env.DATABASE_URL}); await c.connect(); const r=await c.query(\"SELECT PostGIS_Version() AS version, count(*)::int AS migrations FROM _migrations\"); console.log(r.rows[0]); if(!r.rows[0].version || r.rows[0].migrations < 9) process.exit(1); await c.end();"
       - name: Mobility intelligence contract
         run: npm run test:intelligence
       - name: World export privacy contract
