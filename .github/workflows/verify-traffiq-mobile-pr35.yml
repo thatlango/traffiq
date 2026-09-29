@@ -1,0 +1,73 @@
+name: Verify Traffiq Mobile PR35
+
+on:
+  push:
+    branches: [chore/verify-traffiq-mobile-pr35]
+    paths:
+      - ".github/workflows/verify-traffiq-mobile-pr35.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout mobile branch
+        uses: actions/checkout@v4
+        with:
+          repository: thatlango/traffIQAndroid
+          ref: feat/traffiq-mobile-ios-platform
+          path: mobile
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: mobile/**/*.gradle*
+      - name: Accept Android licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+      - name: Install Android platform
+        run: "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.1" "build-tools;36.0.0" "platform-tools"
+      - name: Create CI local properties
+        working-directory: mobile
+        run: printf 'GOOGLE_MAPS_KEY=ci-placeholder\n' > local.properties
+      - name: Unit tests
+        working-directory: mobile
+        run: chmod +x ./gradlew && ./gradlew testDebugUnitTest --stacktrace
+      - name: Lint debug
+        working-directory: mobile
+        run: ./gradlew lintDebug --stacktrace
+      - name: Build debug APK
+        working-directory: mobile
+        run: ./gradlew assembleDebug --stacktrace
+      - name: Verify release build
+        working-directory: mobile
+        run: ./gradlew lintVitalRelease assembleRelease --stacktrace
+
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout mobile branch
+        uses: actions/checkout@v4
+        with:
+          repository: thatlango/traffIQAndroid
+          ref: feat/traffiq-mobile-ios-platform
+          path: mobile
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate --spec mobile/ios/project.yml
+      - name: Build simulator target
+        run: >
+          xcodebuild
+          -project mobile/ios/Traffiq.xcodeproj
+          -scheme Traffiq
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
