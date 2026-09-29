@@ -302,8 +302,36 @@ components:
           type: array
           items: { type: object, additionalProperties: true }
         intelligence:
-          type: object
-          additionalProperties: true
+          $ref: '#/components/schemas/JourneyIntelligence'
+    JourneyIntelligence:
+      type: object
+      required: [risk, observations, alerts, currentProgressFraction]
+      properties:
+        risk: { type: object, additionalProperties: true }
+        observations:
+          type: array
+          items: { type: object, additionalProperties: true }
+        alerts:
+          type: array
+          items: { $ref: '#/components/schemas/MobilityAlert' }
+        currentProgressFraction:
+          type: number
+          minimum: 0
+          maximum: 1
+    MobilityAlert:
+      type: object
+      required: [id, kind, severity, title, message]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [hazard, fuel, charging, rest, stop] }
+        severity: { type: string, enum: [low, medium, high, critical] }
+        title: { type: string }
+        message: { type: string }
+        progressFraction: { type: number, minimum: 0, maximum: 1 }
+        distanceAheadM: { type: integer, minimum: 0 }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        observationId: { type: string, format: uuid }
+        stopId: { type: string, format: uuid }
     ActivatedJourney:
       type: object
       required: [id, status]

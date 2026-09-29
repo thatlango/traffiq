@@ -111,3 +111,105 @@ export function shouldReplanJourney({
   const threshold = Math.max(25, Number(thresholdM) || 200);
   return Number.isFinite(distance) && distance > threshold;
 }
+
+
+export function buildJourneyAlerts({
+  observations = [],
+  stops = [],
+  currentProgressFraction = 0,
+  routeDistanceM = 0,
+  maxHazards = 3,
+  maxStops = 2
+} = {}) {
+  const progress = Math.max(0, Math.min(1, Number(currentProgressFraction) || 0));
+  const distance = Math.max(0, Number(routeDistanceM) || 0);
+
+  const hazardAlerts = observations
+    .filter(item => {
+      const itemProgress = Number(item.progressFraction);
+      const confidence = Number(item.confidence ?? 0);
+      return Number.isFinite(itemProgress) &&
+        itemProgress >= progress - 0.01 &&
+        confidence >= 0.35 &&
+        !['resolved', 'expired', 'disputed'].includes(String(item.status || '').toLowerCase());
+    })
+    .map(item => {
+      const aheadFraction = Math.max(0, Number(item.progressFraction) - progress);
+      const distanceAheadM = distance > 0 ? Math.round(aheadFraction * distance) : null;
+      const label = String(item.type || 'road hazard').replaceAll('_', ' ');
+      return {
+        id: `hazard:${item.id}`,
+        kind: 'hazard',
+        severity: item.severity ?? 'medium',
+        title: `${label.charAt(0).toUpperCase() + label.slice(1)} ahead`,
+        message: distanceAheadM === null
+          ? `${Math.round(Number(item.confidence ?? 0) * 100)}% confidence from current road reports.`
+          : `${Math.max(0, Math.round(distanceAheadM / 100) * 100)} m ahead · ${Math.round(Number(item.confidence ?? 0) * 100)}% confidence.`,
+        progressFraction: Number(item.progressFraction),
+        distanceAheadM,
+        confidence: Number(item.confidence ?? 0),
+        observationId: item.id,
+        stopId: null
+      };
+    })
+    .sort((a, b) => {
+      const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
+      const severityDiff = (severityWeight[b.severity] ?? 0) - (severityWeight[a.severity] ?? 0);
+      return severityDiff || (a.distanceAheadM ?? Number.MAX_SAFE_INTEGER) - (b.distanceAheadM ?? Number.MAX_SAFE_INTEGER);
+    })
+    .slice(0, Math.max(0, Number(maxHazards) || 0));
+
+  const stopAlerts = stops
+    .filter(stop => {
+      const stopProgress = Number(stop.progressFraction);
+      return stop.recommended !== false &&
+        Number.isFinite(stopProgress) &&
+        stopProgress >= progress - 0.005 &&
+        ['planned', 'accepted'].includes(String(stop.status || 'planned'));
+    })
+    .map(stop => {
+      const aheadFraction = Math.max(0, Number(stop.progressFraction) - progress);
+      const distanceAheadM = Number.isFinite(Number(stop.distanceAlongM)) && distance > 0
+        ? Math.max(0, Math.round(Number(stop.distanceAlongM) - progress * distance))
+        : distance > 0
+          ? Math.round(aheadFraction * distance)
+          : null;
+      const type = String(stop.stopType || 'stop');
+      const title = type === 'fuel'
+        ? 'Fuel stop ahead'
+        : type === 'charging'
+          ? 'Charging stop ahead'
+          : type === 'rest'
+            ? 'Rest stop ahead'
+            : 'Recommended stop ahead';
+      const placeName = stop.place?.name ? ` at ${stop.place.name}` : '';
+      return {
+        id: `stop:${stop.id}`,
+        kind: type,
+        severity: type === 'fuel' || type === 'charging' ? 'medium' : 'low',
+        title,
+        message: distanceAheadM === null
+          ? `Recommended${placeName}.`
+          : `${Math.max(0, Math.round(distanceAheadM / 100) * 100)} m ahead${placeName}.`,
+        progressFraction: Number(stop.progressFraction),
+        distanceAheadM,
+        confidence: Number.isFinite(Number(stop.score)) ? Math.min(1, Math.max(0, Number(stop.score) / 100)) : null,
+        observationId: null,
+        stopId: stop.id
+      };
+    })
+    .sort((a, b) => (a.distanceAheadM ?? Number.MAX_SAFE_INTEGER) - (b.distanceAheadM ?? Number.MAX_SAFE_INTEGER))
+    .slice(0, Math.max(0, Number(maxStops) || 0));
+
+  const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
+  return [...hazardAlerts, ...stopAlerts]
+    .sort((a, b) => {
+      if (a.kind === 'hazard' && b.kind !== 'hazard') return -1;
+      if (b.kind === 'hazard' && a.kind !== 'hazard') return 1;
+      if (a.kind === 'hazard' && b.kind === 'hazard') {
+        const severityDiff = (severityWeight[b.severity] ?? 0) - (severityWeight[a.severity] ?? 0);
+        if (severityDiff) return severityDiff;
+      }
+      return (a.distanceAheadM ?? Number.MAX_SAFE_INTEGER) - (b.distanceAheadM ?? Number.MAX_SAFE_INTEGER);
+    });
+}

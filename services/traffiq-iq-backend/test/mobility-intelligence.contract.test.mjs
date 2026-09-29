@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildJourneyAlerts,
   calculateObservationConfidence,
   categorizePlace,
   defaultExpiryForType,
@@ -67,4 +68,59 @@ test('replanning is backend-gated by corridor distance unless forced', () => {
   assert.equal(shouldReplanJourney({ offRouteDistanceM: 240 }), true);
   assert.equal(shouldReplanJourney({ offRouteDistanceM: 50, force: true }), true);
   assert.equal(shouldReplanJourney({ offRouteDistanceM: 350, thresholdM: 500 }), false);
+});
+
+
+test('journey alerts only include relevant hazards ahead and prioritize severity', () => {
+  const alerts = buildJourneyAlerts({
+    currentProgressFraction: 0.40,
+    routeDistanceM: 100_000,
+    observations: [
+      { id: 'behind', type: 'pothole', severity: 'high', confidence: 0.9, status: 'confirmed', progressFraction: 0.20 },
+      { id: 'ahead-low', type: 'traffic', severity: 'medium', confidence: 0.6, status: 'likely', progressFraction: 0.45 },
+      { id: 'ahead-critical', type: 'crash', severity: 'critical', confidence: 0.8, status: 'confirmed', progressFraction: 0.60 },
+      { id: 'weak', type: 'debris', severity: 'high', confidence: 0.2, status: 'unverified', progressFraction: 0.50 }
+    ]
+  });
+
+  assert.equal(alerts.length, 2);
+  assert.equal(alerts[0].id, 'hazard:ahead-critical');
+  assert.equal(alerts[0].distanceAheadM, 20_000);
+  assert.equal(alerts[1].id, 'hazard:ahead-low');
+  assert.ok(alerts.every(item => item.observationId !== 'behind'));
+});
+
+test('journey alerts expose the next recommended stop relative to current progress', () => {
+  const alerts = buildJourneyAlerts({
+    currentProgressFraction: 0.25,
+    routeDistanceM: 200_000,
+    stops: [
+      {
+        id: 'fuel-1',
+        stopType: 'fuel',
+        status: 'planned',
+        recommended: true,
+        progressFraction: 0.55,
+        distanceAlongM: 110_000,
+        score: 92,
+        place: { name: 'Reliable Fuel' }
+      },
+      {
+        id: 'rest-behind',
+        stopType: 'rest',
+        status: 'planned',
+        recommended: true,
+        progressFraction: 0.10,
+        distanceAlongM: 20_000,
+        score: 80,
+        place: { name: 'Old Stop' }
+      }
+    ]
+  });
+
+  assert.equal(alerts.length, 1);
+  assert.equal(alerts[0].id, 'stop:fuel-1');
+  assert.equal(alerts[0].kind, 'fuel');
+  assert.equal(alerts[0].distanceAheadM, 60_000);
+  assert.match(alerts[0].message, /Reliable Fuel/);
 });
