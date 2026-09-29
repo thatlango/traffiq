@@ -5,6 +5,7 @@ import { query, transaction } from './db.js';
 import { nearbyPlaces, previewRoute } from './geo.js';
 import {
   baseConfidenceForSource,
+  buildJourneyAlerts,
   calculateObservationConfidence,
   categorizePlace,
   defaultExpiryForType,
@@ -419,8 +420,71 @@ async function planBundle(userId, planId) {
       WHERE js.journey_plan_id=$1 ORDER BY js.sequence_no, js.created_at`,
     [plan.id]
   );
+
   const selected = routes.rows.find(route => route.id === plan.selected_route_id) ?? null;
   const observations = selected ? await observationsAlongRoute(selected.id) : [];
+
+  const mappedStops = stops.rows.map(row => ({
+    id: row.id,
+    routeId: row.route_id,
+    stopType: row.stop_type,
+    status: row.status,
+    sequence: row.sequence_no,
+    progressFraction: asNumber(row.progress_fraction),
+    distanceAlongM: row.distance_along_m,
+    detourM: row.detour_m,
+    eta: row.eta,
+    recommended: row.recommended,
+    score: asNumber(row.score),
+    reasonCodes: row.reason_codes ?? [],
+    explanation: row.explanation,
+    place: row.place_id ? {
+      id: row.place_id,
+      name: row.place_name,
+      category: row.place_category,
+      lat: Number(row.place_lat),
+      lng: Number(row.place_lng),
+      verified: Boolean(row.place_verified)
+    } : row.metadata?.externalPlace ? {
+      id: row.metadata.externalPlace.id,
+      name: row.metadata.externalPlace.name,
+      category: row.metadata.externalPlace.category,
+      lat: Number(row.metadata.externalPlace.lat),
+      lng: Number(row.metadata.externalPlace.lng),
+      verified: Boolean(row.metadata.externalPlace.verified)
+    } : null
+  }));
+
+  let currentProgressFraction = 0;
+  if (selected) {
+    const progress = await query(
+      `SELECT ST_LineLocatePoint(
+                r.geometry,
+                ST_ClosestPoint(
+                  r.geometry,
+                  ST_SetSRID(ST_MakePoint(jp.lng, jp.lat), 4326)
+                )
+              ) AS progress_fraction
+         FROM journeys j
+         JOIN journey_points jp ON jp.journey_id=j.id
+         JOIN route_alternatives r ON r.id=$2
+        WHERE j.journey_plan_id=$1
+          AND j.user_id=$3
+          AND j.status IN ('active','paused')
+        ORDER BY jp.recorded_at DESC
+        LIMIT 1`,
+      [plan.id, selected.id, userId]
+    );
+    currentProgressFraction = Math.max(0, Math.min(1, asNumber(progress.rows[0]?.progress_fraction) ?? 0));
+  }
+
+  const alerts = buildJourneyAlerts({
+    observations,
+    stops: mappedStops,
+    currentProgressFraction,
+    routeDistanceM: selected ? Number(selected.distance_m) : 0
+  });
+
   return {
     plan: {
       id: plan.id,
@@ -448,39 +512,12 @@ async function planBundle(userId, planId) {
       riskSummary: row.risk_summary ?? {},
       score: asNumber(row.score)
     })),
-    stops: stops.rows.map(row => ({
-      id: row.id,
-      routeId: row.route_id,
-      stopType: row.stop_type,
-      status: row.status,
-      sequence: row.sequence_no,
-      progressFraction: asNumber(row.progress_fraction),
-      distanceAlongM: row.distance_along_m,
-      detourM: row.detour_m,
-      eta: row.eta,
-      recommended: row.recommended,
-      score: asNumber(row.score),
-      reasonCodes: row.reason_codes ?? [],
-      explanation: row.explanation,
-      place: row.place_id ? {
-        id: row.place_id,
-        name: row.place_name,
-        category: row.place_category,
-        lat: Number(row.place_lat),
-        lng: Number(row.place_lng),
-        verified: Boolean(row.place_verified)
-      } : row.metadata?.externalPlace ? {
-        id: row.metadata.externalPlace.id,
-        name: row.metadata.externalPlace.name,
-        category: row.metadata.externalPlace.category,
-        lat: Number(row.metadata.externalPlace.lat),
-        lng: Number(row.metadata.externalPlace.lng),
-        verified: Boolean(row.metadata.externalPlace.verified)
-      } : null
-    })),
+    stops: mappedStops,
     intelligence: {
       risk: riskSummary(observations),
-      observations
+      observations,
+      alerts,
+      currentProgressFraction
     }
   };
 }
