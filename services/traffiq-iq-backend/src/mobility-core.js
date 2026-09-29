@@ -201,10 +201,15 @@ export function buildJourneyAlerts({
     .sort((a, b) => (a.distanceAheadM ?? Number.MAX_SAFE_INTEGER) - (b.distanceAheadM ?? Number.MAX_SAFE_INTEGER))
     .slice(0, Math.max(0, Number(maxStops) || 0));
 
+  const severityWeight = { critical: 4, high: 3, medium: 2, low: 1 };
   return [...hazardAlerts, ...stopAlerts]
     .sort((a, b) => {
       if (a.kind === 'hazard' && b.kind !== 'hazard') return -1;
       if (b.kind === 'hazard' && a.kind !== 'hazard') return 1;
+      if (a.kind === 'hazard' && b.kind === 'hazard') {
+        const severityDiff = (severityWeight[b.severity] ?? 0) - (severityWeight[a.severity] ?? 0);
+        if (severityDiff) return severityDiff;
+      }
       return (a.distanceAheadM ?? Number.MAX_SAFE_INTEGER) - (b.distanceAheadM ?? Number.MAX_SAFE_INTEGER);
     });
 }
