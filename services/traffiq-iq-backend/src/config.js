@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 const required = (name, fallback = undefined) => {
   const value = process.env[name] ?? fallback;
   if (value === undefined || value === '') throw new Error(`Missing environment variable: ${name}`);
@@ -8,6 +10,16 @@ const int = (name, fallback) => {
   const value = Number(process.env[name] ?? fallback);
   if (!Number.isFinite(value)) throw new Error(`Invalid numeric environment variable: ${name}`);
   return value;
+};
+
+const derivedWorldReadKey = () => {
+  const explicit = process.env.TUKU_WORLD_READ_KEY?.trim();
+  if (explicit) return explicit;
+  const estateSecret = process.env.TUKU_ESTATE_INSIGHTS_SECRET?.trim();
+  if (!estateSecret) return '';
+  return createHash('sha256')
+    .update(`tuku-world-read:v1:${estateSecret}`)
+    .digest('base64url');
 };
 
 export const config = {
@@ -25,7 +37,7 @@ export const config = {
   tukuIosRedirectUri: process.env.TUKU_IOS_REDIRECT_URI ?? 'traffiq://auth/tuku/callback',
   tukuCoreUrl: (process.env.TUKU_CORE_INTERNAL_URL ?? process.env.TUKU_CORE_URL ?? 'https://core.tukutuku.org').replace(/\/$/, ''),
   tukuProfileSyncKey: process.env.TUKU_PROFILE_SYNC_KEY ?? '',
-  worldReadKey: process.env.TUKU_WORLD_READ_KEY ?? '',
+  worldReadKey: derivedWorldReadKey(),
   routingBaseUrl: process.env.ROUTING_BASE_URL ?? 'https://router.project-osrm.org',
   geocodingBaseUrl: process.env.GEOCODING_BASE_URL ?? 'https://nominatim.openstreetmap.org',
   geocodingUserAgent: process.env.GEOCODING_USER_AGENT ?? 'TraffIQ/1.0',
